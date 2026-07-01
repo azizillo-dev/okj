@@ -34,4 +34,5 @@ urlpatterns = [
     path("api/v1/library/", include("library.urls")),
     path("api/v1/posts/", include("posts.urls")),
     path("api/v1/posts/", include("interactions.urls")),
+    path("api/v1/", include("comments.urls")),
 ]
