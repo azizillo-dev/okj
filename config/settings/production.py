@@ -2,10 +2,44 @@
 OKJ PLATFORM - PRODUCTION SETTINGS (config/settings/production.py)
 Nega bu fayl kerak: Serverda maksimal xavfsizlik, Cloudflare R2 bulutli xotira
 va yuqori unumdorlikni (Gunicorn/Daphne + Postgres connection pooling) ta'minlash.
+
+KRITIK XAVFSIZLIK TEKSHIRUVLARI:
+- Agar DJANGO_SECRET_KEY kiritilmagan yoki xavfsiz bo'lmasa, server ISHGA TUSHMAYDI.
+- Agar POSTGRES_PASSWORD kiritilmagan bo'lsa, server ISHGA TUSHMAYDI.
 """
 
+import os
+from django.core.exceptions import ImproperlyConfigured
 from .base import *
 import dj_database_url
+
+# ==============================================================================
+# KRITIK ISHGA TUSHISH TEKSHIRUVLARI (Fail Fast)
+# Nega kerak: Production serverda xavfsiz bo'lmagan sozlamalar bilan hech qachon
+# ishga tushmaslik kerak. Muammolarni deploy vaqtida aniqlash runtime'dan yaxshiroq.
+# ==============================================================================
+_secret_key = os.getenv("DJANGO_SECRET_KEY", "")
+if not _secret_key:
+    raise ImproperlyConfigured(
+        "PRODUCTION_ERROR: DJANGO_SECRET_KEY muhit o'zgaruvchisi o'rnatilmagan! "
+        "Xavfsiz tasodifiy kalit yaratish uchun: python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\""
+    )
+if _secret_key.startswith("django-insecure"):
+    raise ImproperlyConfigured(
+        "PRODUCTION_ERROR: DJANGO_SECRET_KEY xavfsiz emas! "
+        "Productionda 'django-insecure-' bilan boshlanuvchi kalit qabul qilinmaydi."
+    )
+
+if not os.getenv("POSTGRES_PASSWORD") and not os.getenv("DATABASE_URL"):
+    raise ImproperlyConfigured(
+        "PRODUCTION_ERROR: POSTGRES_PASSWORD yoki DATABASE_URL muhit o'zgaruvchisi o'rnatilmagan!"
+    )
+
+if not os.getenv("REDIS_PASSWORD"):
+    raise ImproperlyConfigured(
+        "PRODUCTION_ERROR: REDIS_PASSWORD muhit o'zgaruvchisi o'rnatilmagan! "
+        "Redis xavfsizligi uchun kuchli parol o'rnating."
+    )
 
 DEBUG = False
 
@@ -41,6 +75,9 @@ if USE_CLOUDFLARE_R2:
 
 # ==============================================================================
 # SECURITY & CORS IN PRODUCTION
+# HTTPS (Let's Encrypt + Nginx) muhitida ishlash uchun sozlamalar.
+# SECURE_PROXY_SSL_HEADER: Nginx X-Forwarded-Proto sarlavhasini Django xavfsizlik
+# tekshiruvlari uchun ishlatishga ruxsat beradi.
 # ==============================================================================
 CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "https://okj.uz").split(",")
 CORS_ALLOW_CREDENTIALS = True

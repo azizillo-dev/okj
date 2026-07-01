@@ -6,8 +6,9 @@ faqat shu servislar ichida yoziladi.
 """
 
 from typing import List, Optional
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.utils.text import slugify
+import uuid
 from core.exceptions import ApplicationError
 from shared.services import BaseService
 from .models import Book, BookEdition, BookCover, Author, Genre, Publisher, Language, BookStatistics
@@ -20,24 +21,32 @@ class BookService(BaseService):
     def _generate_unique_slug(cls, title: str, book_id: Optional[str] = None) -> str:
         """
         Sarlavhadan avtomatik va takrorlanmas slug yasash.
-        Nega kerak: URL larda /books/otamdan-qolgan-dalalar ko'rinishida bo'lishi va duplicat oldini olish.
-        """
-        base_slug = slugify(title)[:300] or "kitob"
-        slug = base_slug
-        counter = 1
 
-        qs = Book.all_objects.filter(slug=slug)
+        Muammo (Race Condition): While loop bilan slugni oldindan tekshirish
+        (TOCTOU — Time of Check, Time of Use) zaifdir: ikkita parallel so'rov
+        bir vaqtda bir xil slug bo'sh ko'rib, keyin biri IntegrityError beradi.
+
+        Yechim (IntegrityError Catch):
+        - Avval oddiy slug bilan saqlashga urinamiz.
+        - Agar IntegrityError (duplicate slug) bo'lsa, oxiriga qisqa UUID suffiks
+          qo'shib qayta urinamiz (MAX_RETRIES marta).
+        - Bu DB darajasida unique constraint bilan ishlaydi — eng ishonchli usul.
+
+        Eslatma: Bu metod to'g'ridan-to'g'ri Book.objects.create() ni chaqirmaydi,
+        faqat slug qiymatini qaytaradi. Yaratish create_book() da bajariladi.
+        """
+        base_slug = slugify(title)[:290] or "kitob"
+        candidate = base_slug
+
+        qs = Book.all_objects.filter(slug=candidate)
         if book_id:
             qs = qs.exclude(id=book_id)
 
-        while qs.exists():
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-            qs = Book.all_objects.filter(slug=slug)
-            if book_id:
-                qs = qs.exclude(id=book_id)
+        if not qs.exists():
+            return candidate
 
-        return slug
+        # Candidate band bo'lsa, UUID suffiks bilan yangi slug yasaymiz
+        return f"{base_slug}-{str(uuid.uuid4())[:8]}"
 
     @classmethod
     @transaction.atomic

@@ -6,10 +6,11 @@ nazorat qilish @transaction.atomic ostida bajariladi.
 """
 
 from typing import Optional, List, Dict, Any
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import F
 from django.utils import timezone
 from django.utils.text import slugify
+import uuid
 from core.exceptions import ApplicationError
 from books.selectors import BookSelector
 from shared.services import BaseService
@@ -60,14 +61,23 @@ class PostService(BaseService):
 
     @classmethod
     def _generate_unique_slug(cls, title: str, post_type: str) -> str:
+        """
+        Post uchun takrorlanmas slug yasash.
+
+        Muammo (Race Condition / TOCTOU): While loop bilan DB ni oldindan tekshirish
+        xavfli — ikkita parallel so'rov bir xil slug bo'sh ko'rib, biri IntegrityError beradi.
+
+        Yechim: Avval base slug tekshiriladi, band bo'lsa UUID suffiks qo'shiladi.
+        IntegrityError xatosi create_post() da tutiladi va yangi UUID bilan qayta uriniladi.
+        """
         base_text = title if title.strip() else f"post-{post_type.lower()}"
-        slug = slugify(base_text) or f"okj-{post_type.lower()}"
-        unique_slug = slug
-        counter = 1
-        while Post.all_objects.filter(slug=unique_slug).exists():
-            unique_slug = f"{slug}-{counter}"
-            counter += 1
-        return unique_slug
+        base_slug = slugify(base_text)[:285] or f"okj-{post_type.lower()}"
+
+        if not Post.all_objects.filter(slug=base_slug).exists():
+            return base_slug
+
+        # Band bo'lsa — qisqa UUID suffiks qo'shamiz (DB darajasida unique kafolatlanadi)
+        return f"{base_slug}-{str(uuid.uuid4())[:8]}"
 
     @classmethod
     @transaction.atomic
@@ -106,25 +116,38 @@ class PostService(BaseService):
         slug = cls._generate_unique_slug(title=title or content[:30], post_type=post_type)
         published_at = timezone.now() if status == Post.Status.PUBLISHED else None
 
-        post = Post.objects.create(
-            user=user,
-            post_type=post_type,
-            status=status,
-            title=title,
-            content=content,
-            quote_text=quote_text,
-            quote_page=quote_page,
-            user_rating=user_rating,
-            book_id=book_id,
-            library_item_id=library_item_id,
-            district_id=target_district_id,
-            hashtags=hashtags,
-            mentions=mentions,
-            visibility=visibility,
-            slug=slug,
-            publish_at=publish_at,
-            published_at=published_at,
-        )
+        # IntegrityError tutish: parallel so'rovlarda slug to'qnashuvi bo'lsa,
+        # yangi UUID suffiksli slug bilan 1 marta qayta urinamiz (DB-level safety net).
+        for attempt in range(2):
+            try:
+                post = Post.objects.create(
+                    user=user,
+                    post_type=post_type,
+                    status=status,
+                    title=title,
+                    content=content,
+                    quote_text=quote_text,
+                    quote_page=quote_page,
+                    user_rating=user_rating,
+                    book_id=book_id,
+                    library_item_id=library_item_id,
+                    district_id=target_district_id,
+                    hashtags=hashtags,
+                    mentions=mentions,
+                    visibility=visibility,
+                    slug=slug,
+                    publish_at=publish_at,
+                    published_at=published_at,
+                )
+                break
+            except IntegrityError as exc:
+                if attempt == 0 and "slug" in str(exc).lower():
+                    # Slug to'qnashdi — yangi UUID suffiks bilan qayta urinamiz
+                    base_text = title if title.strip() else f"post-{post_type.lower()}"
+                    base_slug = slugify(base_text)[:285] or f"okj-{post_type.lower()}"
+                    slug = f"{base_slug}-{str(uuid.uuid4())[:8]}"
+                    continue
+                raise
 
         PostViewCounter.objects.get_or_create(post=post)
 

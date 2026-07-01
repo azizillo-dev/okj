@@ -29,3 +29,15 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 # Email backend (mahally test uchun konsolga chiqaradi)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# ==============================================================================
+# TEST & LOCAL CACHE — LocMemCache (Redis ulangan bo'lmasa ham testlar ishlaydi)
+# Nega: Test muhitida Redis o'chiq bo'lishi mumkin. django_redis o'rniga
+# xotira keshi ishlatiladi. Throttling ham locmem bilan ishlaydi.
+# ==============================================================================
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "okj-local-cache",
+    }
+}

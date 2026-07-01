@@ -19,7 +19,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / "apps"))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-okj-default-secret-key-change-in-prod")
+# Production'da hech qachon fallback ishlatilmaydi — production.py da qat'iy tekshiruv mavjud.
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-okj-local-dev-only-never-use-in-prod")
 
 # Application definition
 INSTALLED_APPS = [
@@ -138,6 +139,22 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
+    # ==============================================================================
+    # RATE LIMITING (Throttling)
+    # Nega kerak: Brute-force hujumlar, OTP spam va DDoS dan himoya.
+    # anon: 100 so'rov/kun — ro'yxatdan o'tmagan foydalanuvchilar uchun.
+    # user: 1000 so'rov/kun — autentifikatsiyadan o'tgan kitobxonlar uchun.
+    # ==============================================================================
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/day",
+        "user": "1000/day",
+        # OTP so'rash uchun alohida qattiq limit (spam va SIM-swapping himoyasi)
+        "otp_request": "5/hour",
+    },
 }
 
 # ==============================================================================
@@ -169,7 +186,16 @@ SPECTACULAR_SETTINGS = {
 # ==============================================================================
 # REDIS & CHANNELS CONFIGURATION
 # ==============================================================================
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+# Redis URL: REDIS_PASSWORD o'rnatilgan bo'lsa, avtomatik parolli URL yasaymiz.
+# Docker'da: redis://:${REDIS_PASSWORD}@redis:6379/0
+# Lokal devda (Redis paroli yo'q): redis://localhost:6379/0
+_REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
+_REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+_REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+if _REDIS_PASSWORD:
+    REDIS_URL = os.getenv("REDIS_URL", f"redis://:{_REDIS_PASSWORD}@{_REDIS_HOST}:{_REDIS_PORT}/0")
+else:
+    REDIS_URL = os.getenv("REDIS_URL", f"redis://{_REDIS_HOST}:{_REDIS_PORT}/0")
 
 CHANNEL_LAYERS = {
     "default": {

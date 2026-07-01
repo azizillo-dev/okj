@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from core.responses import APIResponse
+from core.throttles import OtpRequestThrottle
 from core.utils import get_client_ip
 from .services import AuthService
 from .selectors import AuthSelector
@@ -26,6 +27,7 @@ from .serializers import (
 class RequestOTPApi(APIView):
     """SMS orqali 4 xonali tasdiqlash kodi so'rash API."""
     permission_classes = [AllowAny]
+    throttle_classes = [OtpRequestThrottle]  # Soatiga 5 marta cheklash (SIM-swapping himoyasi)
 
     def post(self, request):
         serializer = RequestOTPSerializer(data=request.data)
