@@ -3,64 +3,64 @@ OKJ PLATFORM - ACCOUNTS SERVICES (apps/accounts/services.py)
 Nega bu fayl kerak: HackSoft Django Styleguide bo'yicha BARCHA YOZISH (INSERT/UPDATE)
 amallari faqat shu servislar ichida bajariladi. Tranzaksiya (`transaction.atomic()`)
 va biznes qoidalar shu yerda 100% nazorat qilinadi.
+
+OKJ_ID GENERATSIYA ARXITEKTURASI:
+- okj_number: PositiveIntegerField — PostgreSQL darajasida numerik saralash uchun.
+  Matnli ('OKJ-99999' vs 'OKJ-100000') lexicographical xavfi yo'q.
+- select_for_update() + order_by("-okj_number"): Row-level lock orqali atomik ID.
+  Parallel so'rovlar ham takrorlanmas raqam oladi.
+- Okj_id = f"OKJ-{okj_number}" — inson o'qiydigan matnli format.
 """
 
 from typing import Optional
 from django.db import transaction
 from django.db.models import F
 from core.exceptions import ApplicationError
-from core.utils import generate_okj_id
 from shared.services import BaseService
 from .models import User, District
 from .selectors import UserSelector
+
+# OKJ raqamlari 10001 dan boshlanadi (OKJ-10001 — birinchi kitobxon)
+OKJ_NUMBER_START = 10001
 
 
 class UserService(BaseService):
     """Kitobxon hisobini yaratish, tahrirlash va gamifikasiya kechlarini boshqaruvchi servis."""
 
     @classmethod
-    def _generate_atomic_okj_id(cls) -> str:
+    def _generate_atomic_okj_id(cls) -> tuple[int, str]:
         """
-        PostgreSQL darajasida atomik va takrorlanmas OKJ-ID yaratish.
+        PostgreSQL darajasida atomik va takrorlanmas OKJ raqami va ID yaratish.
 
-        Muammo (Race Condition): User.all_objects.count() + 10001 mantiqi
-        bir vaqtda ikkita so'rov kelganda ikkita foydalanuvchiga bir xil
-        raqamni berishi mumkin edi (TOCTOU xatosi).
+        Muammo 1 (Race Condition / TOCTOU):
+        count() + 10001 mantiqi ikkita parallel so'rovda bir xil raqam beradi.
 
-        Yechim (Row-level Lock):
-        - select_for_update() bilan eng oxirgi okj_id'li foydalanuvchini QULLAYDI.
-        - Qullov ichida hech bir boshqa tranzaksiya bu qatorga mos qator qo'sha olmaydi.
-        - Bu shu'ba (@transaction.atomic) ichida bajarilishi SHART — yuqori darajadagi
-          register_reader tranzaksiyasi bu kafolatni ta'minlaydi.
+        Muammo 2 (Lexicographical Sort):
+        okj_id matn sifatida saqlanganida 'OKJ-9' > 'OKJ-10' ko'rinadi, chunki
+        '9' > '1'. Bu 99,999 dan o'tganda tartiblash buzilishiga olib keladi.
 
-        Ishlash tartibi:
-          1. Barcha aktiv va o'chirilgan foydalanuvchilar orasidan, okj_id orqali
-             eng yuqori raqamli foydalanuvchi ROW-LEVEL LOCK bilan tanlanadi.
-          2. Agar hech kim yo'q bo'lsa, 10001 dan boshlanadi.
-          3. Yangi raqam = oxirgi raqam + 1 (deterministik, tasodifiy emas).
-          4. Agar (juda kam ehtimol) oldindan kiritilgan qo'lda yozuv tufayli to'qnashuv
-             bo'lsa, UniqueViolation xatosi db darajasida ushlanadi.
+        Yechim (Numerical Row-Level Lock):
+        - okj_number = PositiveIntegerField — haqiqiy raqam, har doim to'g'ri tartiblanadi.
+        - select_for_update() bilan eng katta okj_number qatora PostgreSQL darajasida
+          QULLANADI (FOR UPDATE). Shu tranzaksiya tugamaguncha boshqa biror so'rov
+          shu qatorni yoki yangi qator qo'sha olmaydi.
+        - Yangi okj_number = oxirgi + 1 (deterministik, tasodifiy emas).
         """
-        # Barcha foydalanuvchilardan (soft deleted ham) eng katta okj_id raqamini qullash.
-        # 'OKJ-XXXXX' formatidan raqamni olish uchun substring ishlatamiz.
         last_user = (
             User.all_objects
-            .filter(okj_id__startswith="OKJ-")
-            .order_by("-okj_id")
+            .filter(okj_number__isnull=False)
+            .order_by("-okj_number")
             .select_for_update()
             .first()
         )
 
-        if last_user and last_user.okj_id:
-            try:
-                last_number = int(last_user.okj_id.split("-")[1])
-            except (IndexError, ValueError):
-                last_number = 10000
+        if last_user and last_user.okj_number:
+            next_number = last_user.okj_number + 1
         else:
-            last_number = 10000
+            next_number = OKJ_NUMBER_START
 
-        next_number = last_number + 1
-        return generate_okj_id(next_number)
+        okj_id = f"OKJ-{next_number}"
+        return next_number, okj_id
 
     @classmethod
     @transaction.atomic
@@ -76,11 +76,9 @@ class UserService(BaseService):
         Yangi kitobxonni ro'yxatdan o'tkazish va avtomatik OKJ pasport raqamini berish.
 
         Nega @transaction.atomic + select_for_update():
-        - Foydalanuvchi yaratilsa-yu pasport raqam berishda xato bo'lsa,
-          bazada yarimta yozuv qolmasligi shart.
-        - Ikki foydalanuvchi bir millisekundda ro'yxatdan o'tsa ham,
-          PostgreSQL qullovi (row-level lock) orqali ularga har doim UNIKAL,
-          TAKRORLANMAS okj_id kafolatlanadi.
+        - Foydalanuvchi yaratilsa-yu ID berishda xato bo'lsa, bazada yarimta yozuv qolmaydi.
+        - Ikki foydalanuvchi bir millisekundda ro'yxatdan o'tsa ham, PostgreSQL row-level lock
+          orqali ularga UNIKAL, TAKRORLANMAS va NUMERIK tartibdagi okj_id kafolatlanadi.
         """
         if phone_number and UserSelector.get_user_by_phone(phone_number):
             raise ApplicationError("Ushbu telefon raqami bilan kitobxon allaqachon ro'yxatdan o'tgan.")
@@ -91,10 +89,10 @@ class UserService(BaseService):
             if not district:
                 raise ApplicationError("Ko'rsatilgan tuman topilmadi.")
 
-        # Atomik va takrorlanmas OKJ-ID yaratish (Row-level lock orqali)
-        okj_id = cls._generate_atomic_okj_id()
+        # Atomik va takrorlanmas OKJ raqami (Row-level lock orqali)
+        okj_number, okj_id = cls._generate_atomic_okj_id()
 
-        username = phone_number or f"google_{google_id}_{okj_id}"
+        username = phone_number or f"google_{google_id}_{okj_number}"
 
         user = User.objects.create(
             username=username,
@@ -104,6 +102,7 @@ class UserService(BaseService):
             last_name=last_name,
             district=district,
             okj_id=okj_id,
+            okj_number=okj_number,
             role=User.Role.READER,
         )
         user.set_unusable_password()

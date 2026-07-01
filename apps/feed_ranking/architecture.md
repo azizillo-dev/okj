@@ -1,89 +1,239 @@
 # OKJ Platform - Feed Ranking Moduli Arxitekturasi (architecture.md)
 
-Bu hujjat **Feed Ranking** (Ijtimoiy lentani algoritmik saralash va gibrid Feed mexanizmi) modulining dizayn qarorlari, matematiki formulalari, kesh strategiyasi va ma'lumotlar oqimini batafsil tushuntiradi.
+Bu hujjat **Feed Ranking** modulining dizayn qarorlari, OKJ-ID numerical sorting arxitekturasi,
+Time-Decay algoritmi, Fan-out on Write strategiyasi va barcha me'moriy tanlovlarni batafsil tushuntiradi.
 
 ---
 
 ## 1. Modulning Maqsadi va O'rnati
 
-`feed_ranking` moduli **OKJ (O'zbekiston Kitobxonlari Jamiyati)** platformasidagi kitobxonlar uchun faqat o'zlari ergashgan (Following) foydalanuvchilar va platformadagi eng sara postlardan iborat algoritmik saralangan lenta (`Home Feed`) yaratib beradi.
-Bu modul mavjud `posts`, `follows`, `interactions` va `comments` modullari ustida qatlam sifatida ishlaydi, biroq ularning jadvallarini yoki ichki kodlarini o'zgartirmaydi (**HackSoft Django Styleguide - Loose Coupling**).
+`feed_ranking` moduli OKJ platformasidagi kitobxonlar uchun algoritmik saralangan shaxsiy lenta
+(Home Feed) yaratadi. Mavjud `posts`, `follows`, `interactions`, `comments` modullari ustida
+**qatlam (layer)** sifatida ishlaydi — ularning jadvallarini yoki ichki kodlarini **o'zgartirmaydi**.
+
+```
+┌─────────────────────────────────────────────────┐
+│              Feed Ranking Module                 │
+│  services.py │ selectors.py │ apis.py │ tasks.py │
+└─────────────────────┬───────────────────────────┘
+                      │ o'qish faqat
+      ┌───────────────┼────────────────┐
+      ▼               ▼                ▼
+  posts app      follows app    interactions app
+```
 
 ---
 
-## 2. Time-Decay Reyting Algoritmi (Post Score Algorithm)
+## 2. OKJ-ID Numerical Sorting Muammosi va Yechimi
 
-Har bir postning lentadagi o'rni algoritmik hisob-kitob (Score) asosida aniqlanadi:
+### Muammo: Lexicographical Sort
+
+Eski arxitekturada `okj_id` faqat **matn (CharField)** sifatida saqlanardi:
+
+```
+'OKJ-9' > 'OKJ-10' > 'OKJ-100' > 'OKJ-1000' (matnli tartib: NOTO'G'RI!)
+```
+
+99,999 dan oshganda:
+```
+order_by("-okj_id") natijalari:
+  OKJ-99999
+  OKJ-9999
+  OKJ-999
+  OKJ-100000  ← TO'G'RI POZITSIYA EMAS!
+```
+
+### Yechim: `okj_number = PositiveIntegerField`
+
+```python
+okj_number = models.PositiveIntegerField(unique=True, null=True, db_index=True)
+```
+
+| Maydon | Tur | Maqsad |
+|--------|-----|--------|
+| `okj_id` | CharField | Inson o'qiydigan format: `"OKJ-10492"` |
+| `okj_number` | PositiveIntegerField | Numerik saralash: `10492` (INTEGER) |
+
+```python
+# To'g'ri:
+User.all_objects.order_by("-okj_number").first()  # 100000 > 99999 ✓
+
+# Noto'g'ri (eski):
+User.all_objects.order_by("-okj_id").first()       # '99999' > '100000' ✗
+```
+
+---
+
+## 3. OKJ-ID Race Condition Yechimi (Row-Level Lock)
+
+### Muammo: TOCTOU (Time of Check, Time of Use)
+
+```python
+# XAVFLI (eski kod):
+last_id = User.all_objects.count() + 10001
+# ← Bu yerda boshqa so'rov ham bir xil count() olishi mumkin!
+okj_id = f"OKJ-{last_id}"
+```
+
+Ikki so'rov ayni vaqtda: ikkisi ham `count() = 5000` ko'radi → ikkisi ham `OKJ-15001` oladi → **Duplicate!**
+
+### Yechim: PostgreSQL Row-Level Lock
+
+```python
+@classmethod
+@transaction.atomic
+def _generate_atomic_okj_id(cls) -> tuple[int, str]:
+    last_user = (
+        User.all_objects
+        .filter(okj_number__isnull=False)
+        .order_by("-okj_number")
+        .select_for_update()   # ← FOR UPDATE lock
+        .first()
+    )
+    next_number = (last_user.okj_number + 1) if last_user else OKJ_NUMBER_START
+    return next_number, f"OKJ-{next_number}"
+```
+
+`SELECT ... FOR UPDATE` PostgreSQL da qatorni qullab qo'yadi.
+Ikkinchi so'rov birinchi tranzaksiya tugamaguncha **kutadi** — takrorlanmas ID kafolatlanadi.
+
+```
+T1: SELECT max → 10001 → LOCK   T2: SELECT max → WAIT...
+T1: INSERT user(okj_number=10001)
+T1: COMMIT → UNLOCK
+                                 T2: SELECT max → 10001 → 10002
+                                 T2: INSERT user(okj_number=10002)
+```
+
+---
+
+## 4. Time-Decay Reyting Algoritmi
 
 $$\text{Score} = \frac{\text{Base\_Weight} + (\text{Likes} \times 10) + (\text{Comments} \times 20)}{(\text{Age\_In\_Hours} + 2)^{1.5}}$$
 
-### Matematik Asoslar:
-- **Base_Weight**: Postning turi bo'yicha beriladigan boshlang'ich og'irlik:
-  - `REVIEW` (Kitob taqrizi) va `EXCHANGE` / `SELL` / `GIFT` (Almashish/Sotish/Sovg'a): **50 ball**. (Nega: Kitobxonlik platformasida chuqur taqrizlar va kitob almashinish eng yuqori qadriyat hisoblanadi).
-  - `QUOTE` (Iqtibos) va `SHOWCASE` (Ko'rgazma rasm): **20 ball**.
-- **Engagement Multipliers**:
-  - `Likes * 10`: Har bir layk postga 10 ball qo'shadi.
-  - `Comments * 20`: Izohlar va muhokamalar laykga nisbatan 2 barobar qadrli hisoblanadi (20 ball), chunki ular kitobxonlar o'rtasida real muloqotni uyg'otadi.
-- **Time-Decay Denominator ($(\text{Age} + 2)^{1.5}$)**:
-  - Vaqt o'tishi bilan postning reytingi eksponental pasayadi (Gravity factor = 1.5).
-  - $+2$ qo'shilishi yangi postlar 0 soatligida cheksizlikka (`ZeroDivisionError`) o'tib ketmasligini ta'minlaydi va birinchi 2 soat ichida postlarning munosib ko'rinish darajasini saqlaydi.
+### Konstantalar:
+
+| Post Turi | Base_Weight | Sabab |
+|-----------|-------------|-------|
+| REVIEW, EXCHANGE, SELL, GIFT | **50** | Platformaning asosiy qadriyati — chuqur taqrizlar va real kitob almashinish |
+| QUOTE, SHOWCASE | **20** | Ijodiy kontent — qimmatli lekin kam munozarali |
+| Boshqalar | **10** | Umum postlar |
+
+### Engagement Multiplikatorlar:
+- **Likes × 10**: Har bir layk 10 ball beradi
+- **Comments × 20**: Izohlar laykdan 2x qadrli — real muloqot ko'rsatkichi
+
+### Time-Decay:
+- `+2` denominator ichida: Yangi post (0 soatlik) cheksizlikka bo'linib ketmaydi
+- `^1.5` (gravity): Eksponentsial pasayish — eski postlar vaqt o'tishi bilan pastga tushadi
 
 ---
 
-## 3. Gibrid Redis Sorted Set (ZSET) Kesh Mexanizmi
+## 5. Feed Arxitektura Strategiyalari
 
-To'g'ridan-to'g'ri har safar millionlab postlar ustida reyting hisoblash bazaga og'ir yuk ($O(N \log N)$) tushiradi. Shu sababli modul **Meta/Reddit Backend me'morchiligi** asosida 2-bosqichli kesh mexanizmini ishlatadi:
+### 5.1. Fan-in (Pull) — `generate_user_feed_cache`
 
-### 1. Kesh Yozish (`generate_user_feed_cache`)
-- Celery periodik task yoki on-demand ishlovchi servis kitobxon ergashgan barcha faol foydalanuvchilarning oxirgi 30 kundagi postlarini o'qiydi.
-- Postlar uchun formula bo'yicha ball hisoblanadi va eng yuqori reytingli 500 ta post ID-si hamda uning Score qiymati **Redis Sorted Set (ZSET)** ichiga joylanadi:
-  - **Key**: `user:feed:cache:<user_id>`
-  - **TTL**: 3600 soniya (1 soat).
+```
+[Cache Miss / Kesh eski] → DB Query (Following posts 30 kun) → Score hisoblash → Redis ZSET
+```
 
-### 2. Keshdan O'qish (`get_ranked_feed_for_user`)
-- API so'rov kelganida selektor `ZREVRANGE` buyrug'i orqali aynan kerakli sahifa (m-n 1-sahifa uchun 0 dan 19 gacha) ID-larini $O(\log N + M)$ tezlikda o'qiydi.
-- Olingan 20 ta UUID bo'yicha PostgreSQL bazasidan faqat o'sha postlar `select_related("user", "book")` va `prefetch_related("media")` orqali **N+1 muammosiz** bitta so'rovda tortib kelinadi.
+- Kesh muddati tugaganda yoki yangi foydalanuvchi uchun
+- PostgreSQL'dan bir to'plamda o'qiydi (N+1 yo'q: `annotate` orqali)
+
+### 5.2. Fan-out on Write — `fan_out_new_post`
+
+```
+[Yangi post] → Score hisoblash → Barcha obunachilar uchun ZADD
+```
+
+- Yozish paytida push (post yaratilganda)
+- Faqat keshi mavjud obunachilar uchun (isrof qilinmaydi)
+- **Celebrity Problem**: Celery asinxron task orqali bajariladi
+
+### 5.3. Fail-Safe Fallback
+
+```
+[Redis xatosi] → SQL Fallback → PostgreSQL (select_related + prefetch_related)
+```
+
+- Tizim hech qachon yiqilmaydi
+- Celery task fon rejimida keshni tiklaydi
 
 ---
 
-## 4. Cache-Miss Fallback (Zaxira Reja)
+## 6. Request Flow (So'rovlar Oqimi)
 
-Agar foydalanuvchi birinchi marta kirgan bo'lsa yoki Redis keshi muddati o'tgan bo'lsa (`Cache Miss`):
-1. Selektor kesh bo'shligini aniqlaydi.
-2. Darhol `FeedRankingService.generate_user_feed_cache(user.id)` chaqiriladi.
-3. Kesh qayta hisoblanib, yangilanadi va foydalanuvchiga hech qanday xatoliksiz saralangan lenta taqdim etiladi.
-4. Agar test muhitida yoki serverda Redis o'chirilgan bo'lsa, `FeedCacheAdapter` avtomatik ravishda xotira yoki Django standart keshiga o'tadi (Graceful Degradation).
+```
+GET /api/v1/posts/feed/?page=1
+        │
+        ▼
+UserRankedFeedApi (Thin View)
+        │
+        ▼
+FeedRankingSelector.get_ranked_feed_for_user(user, page=1)
+        │
+        ├── Redis ZREVRANGE("user:feed:cache:<user_id>", 0, 19)
+        │       │
+        │       ├── [Cache Hit] → Post IDs → DB batch query → Return
+        │       │
+        │       └── [Cache Miss / Redis Error]
+        │               │
+        │               ├── Celery: rebuild_user_feed_cache_task.delay(user_id)
+        │               └── SQL Fallback → PostQuerySet → Return
+        │
+        ▼
+PostReadSerializer (many=True)
+        │
+        ▼
+200 OK { success: true, data: { count, next, previous, results } }
+```
 
 ---
 
-## 5. Request Flow (So'rovlar Oqimi)
+## 7. Indekslar va Optimization Qarorlari
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Kitobxon (Frontend)
-    participant API as UserRankedFeedApi
-    participant Selector as FeedRankingSelector
-    participant Cache as Redis (ZSET)
-    participant Service as FeedRankingService
-    participant DB as PostgreSQL
+### accounts.User:
 
-    User->>API: GET /api/v1/posts/feed/?page=1
-    API->>Selector: get_ranked_feed_for_user(user, page=1)
-    Selector->>Cache: ZREVRANGE user:feed:cache:<user_id> 0 19
-    alt Cache Hit (Keshda bor)
-        Cache-->>Selector: [post_id_1, post_id_2, ...]
-    else Cache Miss (Kesh bo'sh)
-        Selector->>Service: generate_user_feed_cache(user.id)
-        Service->>DB: Following & Posts query (last 30 days)
-        DB-->>Service: Active Posts
-        Service->>Service: Score = (Base + Likes*10 + Comments*20) / (Age+2)^1.5
-        Service->>Cache: ZADD user:feed:cache:<user_id> (Top 500)
-        Cache-->>Selector: [post_id_1, post_id_2, ...]
-    end
-    Selector->>DB: Post.filter(id__in=[...]).select_related(...).prefetch_related(...)
-    DB-->>Selector: Post ORM objects
-    Selector->>Selector: Restore exact Redis ZSET rank ordering
-    Selector-->>API: Ordered Post List
-    API-->>User: 200 OK (Paginated Ranked Feed)
+| Indeks | Sabab |
+|--------|-------|
+| `okj_number` (db_index) | `order_by("-okj_number")` tezkor — O(log N) |
+| `okj_id` (db_index) | Pasport ID bo'yicha tezkor qidiruv |
+
+### feed_ranking (Redis):
+
+| Key Pattern | Tuzilma | TTL |
+|-------------|---------|-----|
+| `user:feed:cache:<user_id>` | ZSET (score → post_id) | 3600 s |
+
+### PostgreSQL Optimization:
+
+```python
+# N+1 muammosiz — 1 query barcha ma'lumotlar uchun
+Post.published_objects.filter(id__in=post_ids)
+    .select_related("user", "book", "district")
+    .prefetch_related("media")
+```
+
+---
+
+## 8. Kelajakdagi Masshtablash Rejasi
+
+| Masshtab | Muammo | Yechim |
+|----------|--------|--------|
+| 10K DAU | Asosiy arxitektura yetarli | Hozirgi kod |
+| 100K DAU | Redis memory | Redis Cluster, top 200 ga cheklash |
+| 1M DAU | Celebrity fan-out (10M+ obunachilar) | Hybrid: Celebrity → Pull, oddiy → Push |
+| 10M DAU | PostgreSQL bottleneck | Cassandra/ScyllaDB feed storage |
+
+### Celebrity Problem Yechimi (1M+ da):
+
+```python
+CELEBRITY_FOLLOWER_THRESHOLD = 10_000
+
+if author.followers_count > CELEBRITY_FOLLOWER_THRESHOLD:
+    # Pull strategiyasi: Obunachining so'rovida real-time qo'shiladi
+    pass
+else:
+    # Push strategiyasi: Fan-out (hozirgi yondashuv)
+    fan_out_post_to_followers_task.delay(post_id, author_id)
 ```

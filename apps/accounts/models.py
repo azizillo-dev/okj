@@ -53,6 +53,17 @@ class User(AbstractUser, UUIDModel, TimeStampedModel, SoftDeleteModel):
         db_index=True, 
         help_text="m-n: OKJ-10492"
     )
+    okj_number = models.PositiveIntegerField(
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=(
+            "Numerical OKJ raqami (m-n: 10492). "
+            "Lexicographical saralash xavfini yo'qotish uchun alohida saqlanadi. "
+            "okj_id = f'OKJ-{okj_number}' bilan sinxron bo'ladi."
+        ),
+    )
     phone_number = models.CharField(
         max_length=20, 
         unique=True, 
