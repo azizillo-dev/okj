@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "comments",
     "follows",
     "notifications",
+    "feed_ranking",
 ]
 
 MIDDLEWARE = [
