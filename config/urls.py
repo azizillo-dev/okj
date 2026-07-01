@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 
     # V1 API Endpoints
+    path("api/v1/auth/", include("authentication.urls")),
     path("api/v1/accounts/", include("accounts.urls")),
     path("api/v1/books/", include("books.urls")),
 ]

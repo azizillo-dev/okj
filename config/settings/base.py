@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     # Third-party packages
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
     "drf_spectacular",
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     # OKJ Business Modules
     "accounts",
     "books",
+    "authentication",
 ]
 
 MIDDLEWARE = [
