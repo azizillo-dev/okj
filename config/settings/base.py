@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "books",
     "authentication",
     "library",
+    "posts",
 ]
 
 MIDDLEWARE = [
