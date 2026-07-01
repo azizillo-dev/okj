@@ -94,7 +94,7 @@ class BookService(BaseService):
             book.authors.set(author_ids)
 
         # Analitika va mashhurlik jadvalini (BookStatistics) birga yaratamiz
-        BookStatistics.objects.create(book=book)
+        BookStatistics.objects.get_or_create(book=book)
 
         return book
 

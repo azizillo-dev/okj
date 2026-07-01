@@ -57,7 +57,7 @@ class BookListCreateApi(APIView):
 
         is_curator = getattr(request.user, "is_curator", False)
         book = BookService.create_book(is_curator=is_curator, **serializer.validated_data)
-        read_serializer = BookReadSerializer(BookSelector.get_book_by_id(book.id))
+        read_serializer = BookReadSerializer(book)
         return APIResponse(
             data=read_serializer.data,
             message="Kitob muvaffaqiyatli qo'shildi.",

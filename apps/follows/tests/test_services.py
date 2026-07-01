@@ -20,7 +20,7 @@ class TestFollowService:
         assert created1 is True
         assert Follow.objects.filter(follower=user1, following=user2, is_deleted=False).count() == 1
         user1.refresh_from_db()
-        assert user1.xp == 5  # Gamification +5 XP
+        assert user1.total_xp == 5  # Gamification +5 XP
 
         # 2. Bekor qilamiz (Unlike/Soft delete)
         f2, created2 = FollowService.toggle_follow(follower=user1, following_id=user2.id)

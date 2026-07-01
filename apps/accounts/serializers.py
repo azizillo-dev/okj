@@ -59,3 +59,13 @@ class ReaderProfileUpdateSerializer(serializers.Serializer):
     bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
     avatar_url = serializers.URLField(max_length=500, required=False, allow_blank=True)
     district_id = serializers.IntegerField(required=False, allow_null=True)
+
+
+class UserPublicSerializer(serializers.ModelSerializer):
+    """Foydalanuvchining ommaviy profili (boshqa modullarda ko'rsatish uchun)."""
+    full_name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ("id", "okj_id", "username", "first_name", "last_name", "full_name", "avatar_url", "role", "total_xp")
+

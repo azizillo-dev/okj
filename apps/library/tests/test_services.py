@@ -15,7 +15,7 @@ from library.selectors import LibrarySelector
 class TestLibraryService:
     def test_add_to_shelf_and_log_progress(self):
         user = User.objects.create_user(phone_number="+998903337766", okj_id="OKJ-77004")
-        book = Book.objects.create(title="Sariq devni minib", slug="sariq-devni-minib", page_count=200)
+        book = Book.objects.create(title="Sariq devni minib", slug="sariq-devni-minib", page_count=200, verification_status="VERIFIED")
 
         item = LibraryService.add_to_shelf(user=user, book_id=str(book.id), status=LibraryItem.ReadingStatus.READING)
         assert item.current_page == 0

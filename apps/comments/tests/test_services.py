@@ -20,13 +20,13 @@ class TestCommentService:
         # 1. Root Comment yozish (Level 0) -> +5 XP beriladi
         root = CommentService.create_comment(user=user1, post_id=post.id, text="Root izoh")
         user1.refresh_from_db()
-        assert user1.xp == 5
+        assert user1.total_xp == 5
         assert root.parent is None
 
         # 2. Reply yozish (Level 1) -> 0 XP beriladi
         reply1 = CommentService.create_comment(user=user2, post_id=post.id, text="1-javob", parent_id=root.id)
         user2.refresh_from_db()
-        assert user2.xp == 0
+        assert user2.total_xp == 0
         assert reply1.parent_id == root.id
 
         # 3. 3-darajaga urininish: reply1 ga javob yozganda ham avtomatik root ga bog'lanadi (Flat-Tree)

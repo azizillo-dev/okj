@@ -27,7 +27,7 @@ class TestFollowsAPI:
         # Obunachilar ro'yxatini o'qiymiz
         resp_list = api_client.get(f"/api/v1/users/{user2.id}/followers/")
         assert resp_list.status_code == status.HTTP_200_OK
-        assert len(resp_list.json()["data"]) == 1
+        assert len(resp_list.json()["data"]["results"]) == 1
 
         # Obunani bekor qilamiz
         resp_unfollow = api_client.delete(f"/api/v1/users/{user2.id}/unfollow/")

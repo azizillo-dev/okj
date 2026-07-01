@@ -126,7 +126,7 @@ class PostService(BaseService):
             published_at=published_at,
         )
 
-        PostViewCounter.objects.create(post=post)
+        PostViewCounter.objects.get_or_create(post=post)
 
         # Media rasmlarini qo'shish
         for idx, media_data in enumerate(media_list):

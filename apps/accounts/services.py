@@ -100,14 +100,17 @@ class UserService(BaseService):
 
     @classmethod
     @transaction.atomic
-    def add_xp(cls, user_id, amount: int) -> None:
+    def add_xp(cls, user_id=None, amount: int = 0, user=None, reason: str = None) -> None:
         """
         Foydalanuvchining umumiy XP ballarini F() ifodasi bilan atomik oshirish.
         Nega F(): Bir vaqtda 2 ta post yozilganda ballar yo'qolib qolmasligi (Race Condition) uchun.
         """
         if amount <= 0:
             return
-        User.objects.filter(id=user_id).update(total_xp=F("total_xp") + amount)
+        target_id = user.id if user else user_id
+        if not target_id:
+            return
+        User.objects.filter(id=target_id).update(total_xp=F("total_xp") + amount)
 
     @classmethod
     @transaction.atomic

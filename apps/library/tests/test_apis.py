@@ -32,7 +32,7 @@ class TestLibraryAPI:
         user = UserService.register_reader(phone_number="+998905554434")
         api_client.force_authenticate(user=user)
 
-        book = Book.objects.create(title="Zararsiz Odatlar", slug="zararsiz-odatlar")
+        book = Book.objects.create(title="Zararsiz Odatlar", slug="zararsiz-odatlar", verification_status="VERIFIED")
         payload = {"book_id": str(book.id), "status": "WANT_TO_READ"}
 
         response = api_client.post("/api/v1/library/shelf/", payload, format="json")
