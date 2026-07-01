@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
     # OKJ Business Modules
     "accounts",
+    "books",
 ]
 
 MIDDLEWARE = [

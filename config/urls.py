@@ -29,4 +29,5 @@ urlpatterns = [
 
     # V1 API Endpoints
     path("api/v1/accounts/", include("accounts.urls")),
+    path("api/v1/books/", include("books.urls")),
 ]
