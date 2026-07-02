@@ -18,6 +18,27 @@ from .models import Post, PostMedia, PostReport, PostViewCounter
 from .validators import check_media_edit_timeframe
 
 
+def _trigger_fan_out(post_id: str, author_id: str) -> None:
+    """
+    Fan-out on Write uchun yordamchi funksiya.
+    transaction.on_commit() dan chaqiriladi — circular import xavfini oldini olish uchun
+    import shu yerda amalga oshiriladi (lazy import).
+
+    Celery mavjud bo'lmasa (test muhiti), to'g'ridan-to'g'ri sinxron bajaradi.
+    """
+    try:
+        from feed_ranking.tasks import fan_out_post_to_followers_task
+        fan_out_post_to_followers_task.delay(post_id=post_id, author_id=author_id)
+    except Exception:
+        # Celery broker mavjud bo'lmasa (lokal yoki test) — sinxron fallback
+        try:
+            from feed_ranking.services import FeedRankingService
+            FeedRankingService.fan_out_new_post(post_id=post_id, author_id=author_id)
+        except Exception:
+            pass  # Fan-out xatosi asosiy oqimni to'sib qolmasin
+
+
+
 class PostService(BaseService):
     """Postlar yaratish, tahrirlash, chop etish va moderatsiya servisi."""
 
@@ -164,6 +185,13 @@ class PostService(BaseService):
         if status == Post.Status.PUBLISHED:
             from accounts.services import UserService
             UserService.add_xp(user=user, amount=15, reason=f"Yangi {post_type} post chop etildi")
+            # Fan-out on Write: Tranzaksiya muvaffaqiyatli tugagandan KEYIN chaqiriladi.
+            # on_commit kafolati: DB rollback bo'lsa task jo'natilmaydi.
+            _post_id = str(post.id)
+            _author_id = str(post.user_id)
+            transaction.on_commit(
+                lambda pid=_post_id, aid=_author_id: _trigger_fan_out(pid, aid)
+            )
 
         return post
 
@@ -248,6 +276,14 @@ class PostService(BaseService):
 
         from accounts.services import UserService
         UserService.add_xp(user=post.user, amount=15, reason=f"{post.post_type} post chop etildi")
+
+        # Fan-out on Write: Tranzaksiya muvaffaqiyatli commitdan KEYIN jo'natiladi.
+        # Lambda closure muammosini (variable capture) oldini olish uchun default arg ishlatiladi.
+        _post_id = str(post.id)
+        _author_id = str(post.user_id)
+        transaction.on_commit(
+            lambda pid=_post_id, aid=_author_id: _trigger_fan_out(pid, aid)
+        )
         return post
 
     @classmethod

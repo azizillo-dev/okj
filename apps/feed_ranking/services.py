@@ -10,6 +10,7 @@ ARXITEKTURA:
 - FeedRankingService.fan_out_new_post(): Yangi post barcha obunachilarga ZADD orqali push.
 """
 
+import time
 import logging
 from typing import Optional, List, Tuple
 from datetime import datetime, timedelta
@@ -25,16 +26,33 @@ logger = logging.getLogger(__name__)
 class FeedCacheAdapter:
     """
     Redis Sorted Set (ZSET) uchun gibrid adabtor.
-    Productionda Redis ZSET (zadd, zrevrange, zcard, zadd) dan foydalanadi.
+    Productionda Redis ZSET (zadd, zrevrange, zcard, delete) dan foydalanadi.
     Agar test jarayonida yoki Redis uzilib qolgan holatlarda xotira (locmem) orqali ishlaydi.
-    Circuit Breaker: Bir marta xato bo'lsa Redis'ni tekshirishni to'xtatadi (ping bilan qayta tekshiradi).
+    Circuit Breaker: Bir marta xato bo'lsa Redis'ni tekshirishni to'xtatadi (30 soniyadan so'ng Half-Open holatida ping bilan qayta tekshiradi).
     """
     _locmem_cache: dict = {}
     _redis_available: bool = True
+    _last_failure_time: Optional[float] = None
+    _half_open_interval: float = 30.0
+
+    @classmethod
+    def _mark_failure(cls):
+        cls._redis_available = False
+        cls._last_failure_time = time.time()
 
     @classmethod
     def _get_raw_client(cls):
         if not cls._redis_available:
+            if cls._last_failure_time is not None and (time.time() - cls._last_failure_time) >= cls._half_open_interval:
+                try:
+                    if hasattr(cache, "client"):
+                        client = cache.client.get_client()
+                        client.ping()
+                        cls._redis_available = True
+                        cls._last_failure_time = None
+                        return client
+                except Exception:
+                    cls._mark_failure()
             return None
         try:
             if hasattr(cache, "client"):
@@ -42,7 +60,7 @@ class FeedCacheAdapter:
                 client.ping()
                 return client
         except Exception:
-            cls._redis_available = False
+            cls._mark_failure()
         return None
 
     @classmethod
@@ -58,14 +76,13 @@ class FeedCacheAdapter:
                 client.expire(key, ttl)
                 return
             except Exception:
-                cls._redis_available = False
+                cls._mark_failure()
 
         # LocMem fallback — (post_id, score) jufti sifatida saqlash
         existing = cls._locmem_cache.get(key, [])
         existing_dict = {pid: sc for pid, sc in existing}
         for pid, sc in scored_items:
             existing_dict[pid] = sc
-        # Score bo'yicha teskari tartibda saqlash
         sorted_items = sorted(existing_dict.items(), key=lambda x: x[1], reverse=True)
         cls._locmem_cache[key] = sorted_items
 
@@ -78,7 +95,7 @@ class FeedCacheAdapter:
                 results = client.zrevrange(key, start, end)
                 return [r.decode("utf-8") if isinstance(r, bytes) else str(r) for r in results]
             except Exception:
-                cls._redis_available = False
+                cls._mark_failure()
 
         data = cls._locmem_cache.get(key, [])
         sliced = data[start : end + 1]
@@ -92,7 +109,7 @@ class FeedCacheAdapter:
             try:
                 return client.zcard(key)
             except Exception:
-                cls._redis_available = False
+                cls._mark_failure()
 
         data = cls._locmem_cache.get(key, [])
         return len(data)
@@ -105,7 +122,7 @@ class FeedCacheAdapter:
             try:
                 client.delete(key)
             except Exception:
-                cls._redis_available = False
+                cls._mark_failure()
         cls._locmem_cache.pop(key, None)
 
 
@@ -196,9 +213,11 @@ class FeedRankingService:
         postlarini yig'ib, Time-Decay formula bilan Score hisoblab, eng yuqori reytingli 500 ta
         post ID-sini va Score-ni Redis Sorted Set (ZSET) ichiga joylashtiradi.
 
-        Fan-in (Pull) strategiyasi:
+        Fan-in (Pull) va Top-Up UX Gibrid strategiyasi:
         - Kesh muddati tugaganda yoki yangi kitobxon kelganda chaqiriladi.
-        - 50 dan kam post bo'lsa platformaning umum postlaridan ham to'ldiradi.
+        - Agar following postlar 50 tadan kam bo'lsa, ularni o'chirib yubormasdan saqlab qoladi.
+        - Yetmagan qismini platformadagi eng sara ommaviy (Public) postlar bilan to'ldiradi (Top-Up).
+        - Following postlarining Score qiymati ommaviy to'ldirilgan postlardan har doim ustun bo'ladi.
 
         Redis Key: "user:feed:cache:<user_id>"
         TTL: 3600 soniya (1 soat)
@@ -217,27 +236,53 @@ class FeedRankingService:
         author_ids = following_ids + [user_id]
         qs = cls._build_feed_queryset(author_ids, thirty_days_ago)
 
-        # Agar following lentasida kamroq post bo'lsa, umum postlar bilan to'ldirish
-        if qs.count() < 50:
-            qs = (
+        following_scored = []
+        following_post_ids = set()
+        for post in qs:
+            score = cls.calculate_post_score(post, now=now)
+            pid_str = str(post.id)
+            following_scored.append((pid_str, score))
+            following_post_ids.add(pid_str)
+
+        following_scored.sort(key=lambda x: x[1], reverse=True)
+
+        # Gibrid Top-Up: Agar following postlar 50 tadan kam bo'lsa, Public postlar bilan to'ldirish
+        if len(following_scored) < 50:
+            public_qs = (
                 Post.published_objects.filter(
                     created_at__gte=thirty_days_ago,
                     status=Post.Status.PUBLISHED,
                     moderation_status=Post.ModerationStatus.APPROVED,
                     visibility=Post.Visibility.PUBLIC,
                 )
+                .exclude(id__in=list(following_post_ids))
                 .annotate(
                     likes_cnt=Count("likes", filter=Q(likes__is_deleted=False), distinct=True),
                     comments_cnt=Count("comments", filter=Q(comments__is_deleted=False), distinct=True),
                 )
             )
+            public_scored = []
+            for post in public_qs:
+                score = cls.calculate_post_score(post, now=now)
+                public_scored.append((str(post.id), score))
+            public_scored.sort(key=lambda x: x[1], reverse=True)
 
-        scored_posts = []
-        for post in qs:
-            score = cls.calculate_post_score(post, now=now)
-            scored_posts.append((str(post.id), score))
+            # Following postlarining Score qiymati har doim ustun bo'lishini ta'minlaymiz
+            if following_scored and public_scored:
+                min_following_score = following_scored[-1][1]
+                curr_max = min_following_score - 0.0001
+                for idx, (pid, pscore) in enumerate(public_scored):
+                    if pscore >= curr_max:
+                        pscore = round(curr_max, 4)
+                    curr_max = min(curr_max - 0.0001, pscore - 0.0001)
+                    if pscore <= 0:
+                        pscore = 0.0001
+                    public_scored[idx] = (pid, pscore)
 
-        scored_posts.sort(key=lambda x: x[1], reverse=True)
+            scored_posts = following_scored + public_scored
+        else:
+            scored_posts = following_scored
+
         top_500 = scored_posts[:500]
 
         cache_key = f"user:feed:cache:{user_id}"

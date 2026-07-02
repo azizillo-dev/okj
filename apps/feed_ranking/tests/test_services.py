@@ -275,3 +275,69 @@ class TestFanOutOnWrite:
         # Obunachining keshida yangi post bo'lishi kerak
         cached_ids = FeedCacheAdapter.zrevrange(follower_cache_key, 0, 50)
         assert str(post.id) in cached_ids
+
+
+@pytest.mark.django_db
+class TestCircuitBreakerHalfOpen:
+    """Circuit Breaker Half-Open holati testlari."""
+
+    def test_half_open_recovery(self):
+        import time
+        # Xatolikni simulyatsiya qilamiz
+        FeedCacheAdapter._mark_failure()
+        assert FeedCacheAdapter._redis_available is False
+        assert FeedCacheAdapter._last_failure_time is not None
+
+        # 30 soniyadan kam vaqt o'tganda hali ham ochiq (qayta urib ko'rmaydi)
+        assert FeedCacheAdapter._get_raw_client() is None
+
+        # 30 soniya o'tgan holatni simulyatsiya qilamiz
+        FeedCacheAdapter._last_failure_time = time.time() - 31.0
+        # Client olishga harakat qilamiz
+        FeedCacheAdapter._get_raw_client()
+        # Agar Redis yoki locmem bo'lsa mantiq ishlaydi
+        FeedCacheAdapter._redis_available = True
+        FeedCacheAdapter._last_failure_time = None
+
+
+@pytest.mark.django_db
+class TestHybridTopUpLogic:
+    """UX Gibrid Top-Up: Following va Public postlarning birlashtirilishi testi."""
+
+    def test_following_score_superiority_in_topup(self):
+        from follows.services import FollowService
+        author = UserService.register_reader(phone_number="+998901240001")
+        public_author = UserService.register_reader(phone_number="+998901240002")
+        reader = UserService.register_reader(phone_number="+998901240003")
+
+        FollowService.follow_user(follower=reader, following_id=author.id)
+
+        # Following post
+        f_post = PostService.create_post(
+            user=author,
+            post_type=Post.PostType.QUOTE,
+            quote_text="Following post",
+            status=Post.Status.PUBLISHED,
+            visibility=Post.Visibility.PUBLIC,
+        )
+        Post.objects.filter(id=f_post.id).update(moderation_status=Post.ModerationStatus.APPROVED)
+
+        # Public post (pastroq reytingli yoki balandroq reytingli bo'lsa ham)
+        p_post = PostService.create_post(
+            user=public_author,
+            post_type=Post.PostType.REVIEW,
+            user_rating=5,
+            title="Public review",
+            content="Juda zo'r kitob",
+            status=Post.Status.PUBLISHED,
+            visibility=Post.Visibility.PUBLIC,
+        )
+        Post.objects.filter(id=p_post.id).update(moderation_status=Post.ModerationStatus.APPROVED)
+
+        count = FeedRankingService.generate_user_feed_cache(reader.id)
+        assert count >= 2
+
+        cache_key = f"user:feed:cache:{reader.id}"
+        cached_ids = FeedCacheAdapter.zrevrange(cache_key, 0, 10)
+        # Following post har doim 1- o'rinda (top-up postdan yuqori) bo'lishi kerak
+        assert cached_ids[0] == str(f_post.id)
