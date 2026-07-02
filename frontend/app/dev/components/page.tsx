@@ -2,13 +2,12 @@
 
 import React, { useState } from 'react';
 import { Layers, Sparkles } from 'lucide-react';
-import { Avatar, PassportStamp, BookCard, PostCard, FollowButton, IntentTag, SkeletonCard } from '@/components/ui';
+import { PostCard } from '@/components/ui';
 import { BookCover3D, ReadingHeatmap, DailySpinWheel } from '@/components/ui/premium';
-import { GlassCard, GlassButton } from '@/components/ui/glass';
+import { GlassCard, GlassButton, GlassBadge, GlassInput, GlassChip, GlassProgress } from '@/components/ui/glass';
 import { Post, Book } from '@/lib/api/types';
 
 export default function ComponentsPreviewPage() {
-  const [activeTag, setActiveTag] = useState('Barchasi');
   const [isSpinOpen, setIsSpinOpen] = useState(false);
 
   const sampleUser = {
@@ -162,6 +161,25 @@ export default function ComponentsPreviewPage() {
           <GlassButton variant="secondary">Secondary GlassButton</GlassButton>
           <GlassButton variant="gold">Gold GlassButton</GlassButton>
           <GlassButton variant="ghost">Ghost Button</GlassButton>
+        </div>
+        <div className="pt-4 space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <GlassBadge variant="gold">👑 VIP Kitobxon</GlassBadge>
+            <GlassBadge variant="success">Yaxshi holatda</GlassBadge>
+            <GlassBadge variant="default">Almashish</GlassBadge>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <GlassChip active>Barchasi</GlassChip>
+            <GlassChip>Iqtiboslar</GlassChip>
+            <GlassChip>Taqrizlar</GlassChip>
+          </div>
+          <div className="max-w-md space-y-2">
+            <span className="text-xs text-okj-text-secondary">O&apos;qish darajasi (72%)</span>
+            <GlassProgress value={72} />
+          </div>
+          <div className="max-w-md">
+            <GlassInput placeholder="Kitob yoki muallif qidirish..." />
+          </div>
         </div>
       </section>
 

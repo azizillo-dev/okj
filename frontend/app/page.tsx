@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, BookOpen, Users, Trophy, ArrowRight, ShieldCheck, Repeat } from 'lucide-react';
+import { Sparkles, BookOpen, Trophy, ArrowRight, Repeat } from 'lucide-react';
 
 // Static SSG Landing page
 export default function LandingPage() {
