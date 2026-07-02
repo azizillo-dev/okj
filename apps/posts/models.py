@@ -117,7 +117,8 @@ class PostMedia(TimeStampedModel):
 
 class PostReport(TimeStampedModel):
     """
-    Post ustidan shikoyat qilish (Moderation Report System).
+    [DEPRECATED] Post ustidan shikoyat qilish (Moderation Report System).
+    MUHIM: Yangi yozuvlar uchun apps.moderation.ContentReport ishlatiladi.
     """
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="reports")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="post_reports")

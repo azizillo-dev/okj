@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "feed_ranking",
     "search",
     "passport",
+    "moderation",
 ]
 
 MIDDLEWARE = [

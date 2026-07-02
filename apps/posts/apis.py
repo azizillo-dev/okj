@@ -13,6 +13,7 @@ from .selectors import PostSelector
 from .services import PostService
 from .permissions import IsPostAuthorOrReadOnly
 from .filters import filter_posts_feed
+from moderation.services import ModerationService
 from .serializers import (
     PostReadSerializer,
     CreatePostSerializer,
@@ -123,7 +124,10 @@ class ArchivePostApi(APIView):
 
 
 class ReportPostApi(APIView):
-    """Post ustidan shikoyat yuborish API."""
+    """
+    [DEPRECATED] Post ustidan shikoyat yuborish API.
+    Yangi markazlashgan moderation moduliga yo'naltiradi.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, slug: str):
@@ -134,5 +138,15 @@ class ReportPostApi(APIView):
         serializer = PostReportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        PostService.report_post(user=request.user, post=post, **serializer.validated_data)
+        reason_str = serializer.validated_data["reason"].upper()
+        valid_reasons = ["SPAM", "HARASSMENT", "COPYRIGHT", "INAPPROPRIATE"]
+        reason = reason_str if reason_str in valid_reasons else "INAPPROPRIATE"
+
+        ModerationService.report_content(
+            reporter=request.user,
+            content_type="POST",
+            target_id=post.id,
+            reason=reason,
+            description=serializer.validated_data.get("details", ""),
+        )
         return APIResponse(message="Shikoyatingiz qabul qilindi va moderatsiyaga yuborildi.", status_code=status.HTTP_201_CREATED)

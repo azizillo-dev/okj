@@ -43,3 +43,5 @@ class ActiveUserManager(BaseUserManager):
             raise ValueError("Superuser is_superuser=True bo'lishi shart.")
 
         return self.create_user(phone_number=username, password=password, username=username, **extra_fields)
+
+    create_superuser = createsuperuser

@@ -40,4 +40,5 @@ urlpatterns = [
     path("api/v1/notifications/", include("notifications.urls")),
     path("api/v1/search/", include("search.urls")),
     path("api/v1/passport/", include("passport.urls")),
+    path("api/v1/moderation/", include("moderation.urls")),
 ]
