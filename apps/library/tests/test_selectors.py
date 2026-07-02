@@ -3,10 +3,9 @@ OKJ PLATFORM - LIBRARY SELECTOR TESTS (apps/library/tests/test_selectors.py)
 """
 
 import pytest
-from django.utils import timezone
 from accounts.models import User
 from books.models import Book
-from library.models import LibraryItem, ReadingLog
+from library.models import LibraryItem
 from library.selectors import LibrarySelector
 
 

@@ -12,7 +12,6 @@ from django.utils import timezone
 from django.utils.text import slugify
 import uuid
 from core.exceptions import ApplicationError
-from books.selectors import BookSelector
 from shared.services import BaseService
 from .models import Post, PostMedia, PostReport, PostViewCounter
 from .validators import check_media_edit_timeframe

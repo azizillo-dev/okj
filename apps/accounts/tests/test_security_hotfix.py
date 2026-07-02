@@ -8,11 +8,8 @@ Yangi qoidalar uchun qo'shimcha testlar:
 
 import pytest
 import threading
-import uuid
 from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.db import IntegrityError
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from django.core.exceptions import ImproperlyConfigured
 
 from accounts.services import UserService

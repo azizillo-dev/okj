@@ -4,8 +4,7 @@ OKJ PLATFORM - BOOKS MODEL TESTS (apps/books/tests/test_models.py)
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from books.models import Book, Author, Genre, BookStatistics
+from books.models import Book, Author, Genre
 
 
 @pytest.mark.django_db

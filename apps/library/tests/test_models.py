@@ -3,10 +3,9 @@ OKJ PLATFORM - LIBRARY MODEL TESTS (apps/library/tests/test_models.py)
 """
 
 import pytest
-from django.core.exceptions import ValidationError
 from accounts.models import User
 from books.models import Book
-from library.models import LibraryItem, ReadingLog, UserReadingStatistic, ReadingGoal
+from library.models import LibraryItem
 
 
 @pytest.mark.django_db

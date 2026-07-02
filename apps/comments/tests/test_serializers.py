@@ -2,7 +2,6 @@
 OKJ PLATFORM - COMMENTS SERIALIZER TESTS (apps/comments/tests/test_serializers.py)
 """
 
-import pytest
 from comments.serializers import CommentWriteSerializer
 
 

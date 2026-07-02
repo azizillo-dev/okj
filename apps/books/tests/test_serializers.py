@@ -2,7 +2,6 @@
 OKJ PLATFORM - BOOKS SERIALIZER TESTS (apps/books/tests/test_serializers.py)
 """
 
-import pytest
 from books.serializers import BookWriteSerializer
 
 

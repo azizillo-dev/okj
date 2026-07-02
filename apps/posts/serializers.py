@@ -7,7 +7,7 @@ validatsiya va serializatsiya.
 from rest_framework import serializers
 from accounts.serializers import UserPublicSerializer
 from books.serializers import BookReadSerializer
-from .models import Post, PostMedia, PostReport
+from .models import Post, PostMedia
 
 
 class PostMediaSerializer(serializers.ModelSerializer):

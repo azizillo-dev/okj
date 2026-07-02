@@ -2,8 +2,7 @@
 OKJ PLATFORM - AUTHENTICATION SERIALIZER TESTS (apps/authentication/tests/test_serializers.py)
 """
 
-import pytest
-from authentication.serializers import RequestOTPSerializer, VerifyOTPSerializer
+from authentication.serializers import RequestOTPSerializer
 
 
 class TestAuthSerializers:

@@ -6,7 +6,7 @@ Nega bu fayl kerak: Boshqaruv paneli orqali kuratorlar kitoblarni
 
 from django.contrib import admin
 from django.contrib import messages
-from .models import Author, Genre, Publisher, Language, Book, BookEdition, BookCover, BookStatistics
+from .models import Author, Genre, Publisher, Language, Book, BookEdition, BookCover
 
 
 @admin.register(Author)

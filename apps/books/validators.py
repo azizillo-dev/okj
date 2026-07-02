@@ -7,7 +7,7 @@ to'g'ri kelishini va muqova rasmlari xavfsizligini ta'minlash uchun.
 import re
 import datetime
 from django.core.exceptions import ValidationError
-from core.constants import ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGE_UPLOAD_SIZE_MB
+from core.constants import ALLOWED_IMAGE_EXTENSIONS
 
 
 def validate_isbn_10(value: str) -> None:

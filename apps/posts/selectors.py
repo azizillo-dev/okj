@@ -5,7 +5,7 @@ amallari va N+1 muammosiz optimizatsiyalar shu yerda bajariladi.
 """
 
 from typing import Optional
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet
 from shared.selectors import BaseSelector
 from .models import Post, DraftPost
 

@@ -4,8 +4,6 @@ Nega bu fayl kerak: HackSoft Django Styleguide bo'yicha APIView va Serializerlar
 serializerni tanlash (m-n: read va write uchun alohida serializer) mixinlarini berish.
 """
 
-from rest_framework.response import Response
-from rest_framework import status
 
 
 class MultiSerializerViewSetMixin:

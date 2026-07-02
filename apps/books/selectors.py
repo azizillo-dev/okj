@@ -6,9 +6,9 @@ va `prefetch_related("authors", "genres")` majburiy qo'llaniladi (N+1 muammoni o
 """
 
 from typing import Optional
-from django.db.models import QuerySet, Q, Count
+from django.db.models import QuerySet, Q
 from shared.selectors import BaseSelector
-from .models import Book, Author, Genre, Publisher
+from .models import Book, Author, Genre
 
 
 class BookSelector(BaseSelector):

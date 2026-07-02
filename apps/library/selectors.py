@@ -5,7 +5,7 @@ amallari va N+1 muammosiz optimizatsiyalar shu yerda bajariladi.
 """
 
 from typing import Optional, Dict, Any, List
-from django.db.models import QuerySet, Sum, Count
+from django.db.models import QuerySet, Sum
 from django.utils import timezone
 from shared.selectors import BaseSelector
 from .models import LibraryItem, ReadingLog, UserReadingStatistic, ReadingGoal

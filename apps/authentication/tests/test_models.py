@@ -6,7 +6,7 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from accounts.models import User
-from authentication.models import OTPCode, UserDevice, LoginHistory
+from authentication.models import OTPCode, UserDevice
 
 
 @pytest.mark.django_db

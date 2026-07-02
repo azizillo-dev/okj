@@ -5,7 +5,6 @@ amallari faqat `selectors.py` ichida bo'lishi shart. Bu viewlar ichida og'ir ORM
 so'rovlar yozilmasligini kafolatlaydi.
 """
 
-from typing import Any
 from django.db.models import QuerySet
 
 

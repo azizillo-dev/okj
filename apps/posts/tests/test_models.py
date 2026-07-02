@@ -4,7 +4,7 @@ OKJ PLATFORM - POSTS MODEL TESTS (apps/posts/tests/test_models.py)
 
 import pytest
 from accounts.models import User
-from posts.models import Post, PostMedia, DraftPost
+from posts.models import Post, DraftPost
 
 
 @pytest.mark.django_db

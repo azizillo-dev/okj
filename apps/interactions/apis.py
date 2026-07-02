@@ -10,7 +10,6 @@ from rest_framework import status
 from core.responses import APIResponse
 from posts.selectors import PostSelector
 from .services import InteractionService
-from .selectors import InteractionSelector
 from .serializers import PostLikeSerializer, PostBookmarkSerializer, BookmarkCreateSerializer
 
 

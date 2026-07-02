@@ -14,7 +14,6 @@ import logging
 from typing import List
 from datetime import timedelta
 from django.utils import timezone
-from django.db.models import Count, Q
 from posts.models import Post
 from follows.models import Follow
 from feed_ranking.services import FeedCacheAdapter, FeedRankingService

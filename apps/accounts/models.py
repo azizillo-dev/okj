@@ -6,7 +6,7 @@ geo-lokatsiyasi (Viloyat/Tuman) va intellektual statuslarini PostgreSQL da saqla
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import Q, F
+from django.db.models import Q
 from core.models import UUIDModel, TimeStampedModel, SoftDeleteModel
 from .managers import ActiveUserManager
 from .validators import validate_phone_number_format, validate_bio_content

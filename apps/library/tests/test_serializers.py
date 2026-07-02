@@ -2,8 +2,7 @@
 OKJ PLATFORM - LIBRARY SERIALIZER TESTS (apps/library/tests/test_serializers.py)
 """
 
-import pytest
-from library.serializers import LogReadingProgressSerializer, CreateGoalSerializer
+from library.serializers import LogReadingProgressSerializer
 
 
 class TestLibrarySerializers:

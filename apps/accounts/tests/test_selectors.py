@@ -4,7 +4,7 @@ OKJ PLATFORM - ACCOUNTS SELECTOR TESTS (apps/accounts/tests/test_selectors.py)
 
 import pytest
 from accounts.models import User, District
-from accounts.selectors import UserSelector, DistrictSelector
+from accounts.selectors import UserSelector
 
 
 @pytest.mark.django_db

@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from posts.models import Post
 from comments.models import Comment
-from moderation.models import ContentReport, UserModerationFlag
+from moderation.models import ContentReport
 from moderation.services import ModerationService
 from moderation.selectors import ModerationSelector, _verify_postgres
 

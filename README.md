@@ -1,5 +1,7 @@
 # O'zbekiston Kitobxonlari Jamiyati (OKJ) — Backend Foundation
 
+[![CI/CD Pipeline](https://github.com/azizillo-dev/okj/actions/workflows/ci.yml/badge.svg)](https://github.com/azizillo-dev/okj/actions/workflows/ci.yml)
+
 Bu loyiha **O'zbekiston Kitobxonlari Jamiyati (OKJ)** platformasining **Professional Modular Monolith** dasturiy poydevori hisoblanadi.
 
 ## 🛠 Texnologiyalar

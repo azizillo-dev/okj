@@ -5,7 +5,7 @@ va kiruvchi so'rovlar validatsiyasi.
 """
 
 from rest_framework import serializers
-from .models import Author, Genre, Publisher, Language, Book, BookEdition, BookCover
+from .models import Author, Genre, Publisher, Language, Book, BookCover
 
 
 class AuthorSerializer(serializers.ModelSerializer):

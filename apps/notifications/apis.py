@@ -6,7 +6,6 @@ Faqat `selectors.py` va `services.py` dan foydalanadi.
 
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
 from core.responses import APIResponse
 from core.pagination import StandardResultsSetPagination
 from .selectors import NotificationSelector

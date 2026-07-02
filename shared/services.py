@@ -7,7 +7,6 @@ qoidalari va validatsiyani avtomat ulaydi.
 
 from typing import Any
 from django.db import transaction
-from core.exceptions import ApplicationError
 
 
 class BaseService:

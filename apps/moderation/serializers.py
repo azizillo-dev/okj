@@ -5,7 +5,7 @@ API ko'rinishida transport qilish va validatsiya qilish uchun toza transport qat
 """
 
 from rest_framework import serializers
-from .models import ContentReport, UserModerationFlag
+from .models import ContentReport
 
 
 class ReportContentInputSerializer(serializers.Serializer):

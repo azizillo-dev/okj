@@ -1,0 +1,90 @@
+name: OKJ Enterprise CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Code Quality & Formatting (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff Linter
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+
+      - name: Run Ruff Lint & Quality Check
+        run: |
+          python -m ruff check .
+
+  test:
+    name: Backend Test Suite (PostgreSQL 16 & Redis 7)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: okj_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/okj_ci
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      SENTRY_DSN: ""
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Application Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt --break-system-packages || pip install -r requirements.txt
+          pip install pytest pytest-django
+
+      - name: Run PostgreSQL Migrations & Enable Extensions
+        run: |
+          python manage.py migrate --noinput
+
+      - name: Verify PostgreSQL Connection (No SQLite Fallback)
+        run: |
+          python -c "import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.local'); django.setup(); from django.db import connections; vendor = connections['default'].vendor; assert vendor == 'postgresql', f'CRITICAL: Expected postgresql connection, but got {vendor}! Tests must not run on SQLite.'"
+
+      - name: Execute Complete Test Suite (143 Tests)
+        run: |
+          python -m pytest apps/ core/ -v

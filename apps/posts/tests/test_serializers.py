@@ -2,7 +2,6 @@
 OKJ PLATFORM - POSTS SERIALIZER TESTS (apps/posts/tests/test_serializers.py)
 """
 
-import pytest
 from posts.serializers import CreatePostSerializer
 
 

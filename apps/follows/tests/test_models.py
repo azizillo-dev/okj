@@ -4,7 +4,6 @@ OKJ PLATFORM - FOLLOWS MODEL TESTS (apps/follows/tests/test_models.py)
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from accounts.models import User
 from follows.models import Follow
 

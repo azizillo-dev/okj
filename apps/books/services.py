@@ -6,12 +6,12 @@ faqat shu servislar ichida yoziladi.
 """
 
 from typing import List, Optional
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.utils.text import slugify
 import uuid
 from core.exceptions import ApplicationError
 from shared.services import BaseService
-from .models import Book, BookEdition, BookCover, Author, Genre, Publisher, Language, BookStatistics
+from .models import Book, BookStatistics
 
 
 class BookService(BaseService):

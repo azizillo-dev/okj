@@ -5,7 +5,7 @@ OKJ PLATFORM - AUTHENTICATION SERVICE TESTS (apps/authentication/tests/test_serv
 import pytest
 from core.exceptions import ApplicationError
 from authentication.services import AuthService
-from authentication.models import LoginHistory, UserDevice
+from authentication.models import LoginHistory
 
 
 @pytest.mark.django_db

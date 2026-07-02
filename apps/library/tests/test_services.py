@@ -3,7 +3,6 @@ OKJ PLATFORM - LIBRARY SERVICE TESTS (apps/library/tests/test_services.py)
 """
 
 import pytest
-from django.utils import timezone
 from accounts.models import User
 from books.models import Book
 from library.models import LibraryItem, ReadingGoal

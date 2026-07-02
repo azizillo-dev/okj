@@ -9,7 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from core.exceptions import ApplicationError
 from shared.services import BaseService
-from .models import Notification, NotificationType
+from .models import Notification
 
 
 class NotificationService(BaseService):

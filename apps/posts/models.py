@@ -6,7 +6,6 @@ kitob almashish/sotish e'lonlari hamda moderatsiya holatlarini bazada saqlash.
 
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
 from core.models import UUIDModel, TimeStampedModel, SoftDeleteModel
 from books.models import Book
 from library.models import LibraryItem

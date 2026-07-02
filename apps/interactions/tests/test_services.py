@@ -6,7 +6,7 @@ import pytest
 from accounts.models import User
 from posts.models import Post
 from interactions.services import InteractionService
-from interactions.models import PostLike, PostBookmark
+from interactions.models import PostLike
 
 
 @pytest.mark.django_db

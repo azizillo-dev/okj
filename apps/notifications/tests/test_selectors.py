@@ -4,7 +4,7 @@ OKJ PLATFORM - NOTIFICATIONS SELECTOR TESTS (apps/notifications/tests/test_selec
 
 import pytest
 from accounts.models import User
-from notifications.models import Notification, NotificationType
+from notifications.models import Notification
 from notifications.selectors import NotificationSelector
 
 

@@ -3,7 +3,7 @@ OKJ PLATFORM - BOOKS SELECTOR TESTS (apps/books/tests/test_selectors.py)
 """
 
 import pytest
-from books.models import Book, Author, Genre
+from books.models import Book
 from books.selectors import BookSelector
 
 
