@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Camera, Upload, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Avatar } from '@/components/ui';
+import { authApi } from '@/lib/api/auth';
 
 export default function SettingsPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -60,13 +61,26 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+    setErrorMsg(null);
+    setUploadSuccess(false);
+    try {
+      await authApi.updateProfile({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        bio: formData.bio,
+      });
+      if (previewUrl) {
+        await authApi.updateAvatar(previewUrl);
+      }
       setUploadSuccess(true);
-    }, 1000);
+    } catch (err: unknown) {
+      setErrorMsg((err as { message?: string })?.message || "Saqlashda xatolik yuz berdi.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (

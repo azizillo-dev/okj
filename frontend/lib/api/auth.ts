@@ -50,4 +50,14 @@ export const authApi = {
     const response = await apiClient.get<APIResponse<User>>('/users/me/');
     return response.data.data!;
   },
+
+  updateProfile: async (payload: Partial<{ first_name: string; last_name: string; bio: string }>): Promise<User> => {
+    const response = await apiClient.patch<APIResponse<User>>('/users/me/', payload);
+    return response.data.data!;
+  },
+
+  updateAvatar: async (avatarDataUrl: string): Promise<User> => {
+    const response = await apiClient.patch<APIResponse<User>>('/users/me/avatar/', { avatar: avatarDataUrl });
+    return response.data.data!;
+  },
 };
