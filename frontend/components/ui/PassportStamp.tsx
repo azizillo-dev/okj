@@ -10,7 +10,7 @@ interface PassportStampProps {
   locked?: boolean;
 }
 
-export const PassportStamp: React.FC<PassportStampProps> = ({ icon, label, locked = false }) => {
+export const PassportStamp: React.FC<PassportStampProps> = React.memo(({ icon, label, locked = false }) => {
   return (
     <div
       className={clsx(
@@ -33,4 +33,6 @@ export const PassportStamp: React.FC<PassportStampProps> = ({ icon, label, locke
       </span>
     </div>
   );
-};
+});
+PassportStamp.displayName = 'PassportStamp';
+

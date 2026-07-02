@@ -3,7 +3,6 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import clsx from 'clsx';
 import { Star, BookOpen } from 'lucide-react';
 import { Book } from '@/lib/api/types';
 
@@ -12,7 +11,7 @@ interface BookCardProps {
   variant?: 'compact' | 'full';
 }
 
-export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'full' }) => {
+export const BookCard: React.FC<BookCardProps> = React.memo(({ book, variant = 'full' }) => {
   const authorNames = book.authors?.map((a) => a.name).join(', ') || 'Noma\'lum muallif';
 
   if (variant === 'compact') {
@@ -82,4 +81,6 @@ export const BookCard: React.FC<BookCardProps> = ({ book, variant = 'full' }) =>
       </div>
     </Link>
   );
-};
+});
+BookCard.displayName = 'BookCard';
+

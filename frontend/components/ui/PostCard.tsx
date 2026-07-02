@@ -30,7 +30,7 @@ interface PostCardProps {
   onLikeToggle?: (postId: string, newLiked: boolean, newCount: number) => void;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onLikeToggle }) => {
+export const PostCard: React.FC<PostCardProps> = React.memo(({ post, onLikeToggle }) => {
   const [isLiked, setIsLiked] = useState(post.is_liked_by_user || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [isLiking, setIsLiking] = useState(false);
@@ -359,4 +359,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLikeToggle }) => {
       </GlassBottomSheet>
     </article>
   );
-};
+});
+PostCard.displayName = 'PostCard';
+

@@ -16,8 +16,9 @@ export interface BookCover3DProps {
  * High-performance 3D Book Cover component using pure CSS 3D transforms.
  * Features realistic book spine, page edge shadow, and interactive tilt on hover.
  */
-export const BookCover3D: React.FC<BookCover3DProps> = ({ book, onClick, className }) => {
+export const BookCover3D: React.FC<BookCover3DProps> = React.memo(({ book, onClick, className }) => {
   const authorNames = book.authors?.map((a) => a.name).join(', ') || 'Noma\'lum muallif';
+
 
   return (
     <div
@@ -97,4 +98,6 @@ export const BookCover3D: React.FC<BookCover3DProps> = ({ book, onClick, classNa
       </div>
     </div>
   );
-};
+});
+BookCover3D.displayName = 'BookCover3D';
+

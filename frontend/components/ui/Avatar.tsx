@@ -29,7 +29,7 @@ const getHashColor = (idOrName: string = 'okj'): string => {
   return PALETTE[index];
 };
 
-export const Avatar: React.FC<AvatarProps> = ({ user, size = 'md', className }) => {
+export const Avatar: React.FC<AvatarProps> = React.memo(({ user, size = 'md', className }) => {
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
     md: 'w-11 h-11 text-base',
@@ -61,4 +61,6 @@ export const Avatar: React.FC<AvatarProps> = ({ user, size = 'md', className }) 
       )}
     </div>
   );
-};
+});
+Avatar.displayName = 'Avatar';
+

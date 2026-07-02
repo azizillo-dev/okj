@@ -1,13 +1,23 @@
 'use client';
 
 import React, { use, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { Trophy, BookOpen, Layers, Flame, Share2, Shield, Gift } from 'lucide-react';
 import { passportApi } from '@/lib/api/passport';
 import { PassportAnalytics } from '@/lib/api/types';
 import { Avatar, PassportStamp, FollowButton, SkeletonCard } from '@/components/ui';
-import { ReadingHeatmap, DailySpinWheel } from '@/components/ui/premium';
 import { GlassButton } from '@/components/ui/glass';
+
+const ReadingHeatmap = dynamic(() => import('@/components/ui/premium').then((mod) => mod.ReadingHeatmap), {
+  loading: () => <div className="h-44 w-full rounded-2xl bg-okj-surface/50 animate-pulse border border-okj-card-border" />,
+  ssr: false,
+});
+
+const DailySpinWheel = dynamic(() => import('@/components/ui/premium').then((mod) => mod.DailySpinWheel), {
+  ssr: false,
+});
+
 
 export default function UserProfilePage({ params }: { params: Promise<{ okjId: string }> }) {
   const { okjId } = use(params);

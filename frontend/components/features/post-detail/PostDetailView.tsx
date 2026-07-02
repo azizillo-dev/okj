@@ -24,10 +24,15 @@ import {
 import { Post, Comment } from '@/lib/api/types';
 import { postsApi } from '@/lib/api/posts';
 import { Avatar, FollowButton } from '@/components/ui';
+import dynamic from 'next/dynamic';
 import { GlassCard, GlassBottomSheet, GlassButton } from '@/components/ui/glass';
-import { FullscreenMediaViewer } from './FullscreenMediaViewer';
 import { CommentComposer } from './CommentComposer';
 import { InfiniteCommentsTree } from './InfiniteCommentsTree';
+
+const FullscreenMediaViewer = dynamic(
+  () => import('./FullscreenMediaViewer').then((mod) => mod.FullscreenMediaViewer),
+  { ssr: false }
+);
 import { PostActionsMenu } from './PostActionsMenu';
 import { RelatedContentWidget } from './RelatedContentWidget';
 
