@@ -18,7 +18,7 @@ export const ClientLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chi
     <div className="min-h-screen flex flex-col bg-okj-bg-deep text-okj-text-primary selection:bg-okj-gold selection:text-okj-bg-deep relative overflow-x-hidden">
       <AmbientBackground />
       <Navbar onOpenCreateModal={openCreateModal} />
-      <main className="flex-1 pb-16 md:pb-8 relative z-10">{children}</main>
+      <main className="flex-1 pb-20 md:pb-8 relative z-10 w-full ultrawide-container">{children}</main>
       {isCreateModalOpen && <CreatePostModal isOpen={isCreateModalOpen} onClose={closeCreateModal} />}
     </div>
   );

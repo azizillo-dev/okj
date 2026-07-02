@@ -75,7 +75,10 @@ export const Navbar: React.FC<{ onOpenCreateModal?: () => void }> = ({ onOpenCre
       </div>
 
       {/* Mobile Bottom Bar */}
-      <nav aria-label="Mobil navigatsiya" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-okj-surface/95 backdrop-blur-lg border-t border-okj-card-border px-2 py-1.5 flex items-center justify-around">
+      <nav
+        aria-label="Mobil navigatsiya"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-okj-surface/95 backdrop-blur-lg border-t border-okj-card-border px-2 pt-1.5 safe-bottom flex items-center justify-around shadow-[0_-8px_24px_rgba(0,0,0,0.3)]"
+      >
         {navLinks.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));

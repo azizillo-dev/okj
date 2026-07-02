@@ -60,3 +60,29 @@ body {
   }
 }
 
+/* Safe Area Insets & iOS Dynamic Island accommodations */
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+  .safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  .safe-left {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+  }
+  .safe-right {
+    padding-right: max(0.5rem, env(safe-area-inset-right));
+  }
+}
+
+/* Ultra-wide container optimization */
+@media (min-width: 1536px) {
+  .ultrawide-container {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+
