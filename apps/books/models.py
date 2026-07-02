@@ -6,6 +6,8 @@ mualliflar, janrlar, nashriyotlar va statistika jadvallarini saqlash.
 
 from django.db import models
 from django.db.models import Q
+from django.contrib.postgres.search import SearchVectorField
+from django.contrib.postgres.indexes import GinIndex
 from core.models import UUIDModel, TimeStampedModel, SoftDeleteModel
 from .validators import (
     validate_isbn_10,
@@ -164,6 +166,7 @@ class Book(UUIDModel, TimeStampedModel, SoftDeleteModel):
         max_length=500, blank=True, validators=[validate_cover_image_url_or_extension]
     )
     search_keywords = models.CharField(max_length=500, blank=True, help_text="Tezkor qidiruv so'zlari")
+    search_vector = SearchVectorField(null=True, db_index=True)
 
     # Cache Counters (Tezkor o'qish uchun)
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00, db_index=True)
@@ -198,6 +201,7 @@ class Book(UUIDModel, TimeStampedModel, SoftDeleteModel):
         indexes = [
             models.Index(fields=["verification_status", "is_deleted", "-average_rating"], name="idx_book_verified_rating"),
             models.Index(fields=["verification_status", "-created_at"], name="idx_book_status_created"),
+            GinIndex(fields=["search_vector"], name="idx_book_search_vector"),
         ]
 
     def __str__(self):

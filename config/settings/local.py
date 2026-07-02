@@ -21,8 +21,20 @@ DATABASES = {
 # Agar .env da DATABASE_URL ko'rsatilgan bo'lsa (m-n docker-compose dagi postgres)
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
-    import dj_database_url
-    DATABASES["default"] = dj_database_url.parse(DATABASE_URL)
+    try:
+        import dj_database_url
+        DATABASES["default"] = dj_database_url.parse(DATABASE_URL)
+    except ImportError:
+        from urllib.parse import urlparse
+        url = urlparse(DATABASE_URL)
+        DATABASES["default"] = {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": url.path[1:],
+            "USER": url.username,
+            "PASSWORD": url.password,
+            "HOST": url.hostname,
+            "PORT": url.port or 5432,
+        }
 
 # CORS local frontend (Next.js & Flutter Web) uchun ochiq
 CORS_ALLOW_ALL_ORIGINS = True

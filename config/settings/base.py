@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
 
     # Third-party packages
     "rest_framework",
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     "follows",
     "notifications",
     "feed_ranking",
+    "search",
 ]
 
 MIDDLEWARE = [
