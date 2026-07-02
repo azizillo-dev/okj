@@ -23,41 +23,7 @@ export default function SearchPage() {
     queryKey: ['search', debouncedTerm, activeTab],
     queryFn: async () => {
       if (!debouncedTerm) return null;
-      try {
-        return await searchApi.globalSearch(debouncedTerm, activeTab !== 'all' ? activeTab : undefined);
-      } catch {
-        // Fallback demo results for offline/standalone preview
-        return {
-          count: 3,
-          books: [
-            {
-              id: 'b1',
-              title: 'Yulduzli tunlar',
-              slug: 'yulduzli-tunlar',
-              authors: [{ id: 'a1', name: 'Pirimqul Qodirov' }],
-              average_rating: 4.9,
-            },
-            {
-              id: 'b2',
-              title: 'O\'tkan kunlar',
-              slug: 'otkan-kunlar',
-              authors: [{ id: 'a2', name: 'Abdulla Qodiriy' }],
-              average_rating: 4.8,
-            },
-          ],
-          users: [
-            {
-              id: 'u1',
-              username: 'alisher_rustamov',
-              first_name: 'Alisher',
-              last_name: 'Rustamov',
-              okj_id: 'OKJ-10492',
-              total_xp: 1450,
-            },
-          ],
-          posts: [],
-        };
-      }
+      return await searchApi.globalSearch(debouncedTerm, activeTab !== 'all' ? activeTab : undefined);
     },
     enabled: Boolean(debouncedTerm),
   });
