@@ -19,7 +19,3 @@ ignore = [
     "F841",  # Local variable assigned to but never used (common when creating test objects)
 ]
 
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings.local"
-python_files = ["tests.py", "test_*.py", "*_tests.py"]
-addopts = "--reuse-db"
