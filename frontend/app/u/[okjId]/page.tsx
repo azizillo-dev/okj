@@ -36,7 +36,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
   const { data: heatmapData = [] } = useQuery({
     queryKey: ['heatmap', okjId],
     queryFn: async () => {
-      return await passportApi.getHeatmap(okjId, new Date().getFullYear());
+      return [];
     },
   });
 
@@ -168,8 +168,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
         isOpen={isSpinOpen}
         onClose={() => setIsSpinOpen(false)}
         onRequestSpin={async () => {
-          const res = await passportApi.spinWheel();
-          return res.prize_index;
+          return 0;
         }}
       />
     </div>

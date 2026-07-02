@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { UserCheck, UserPlus, Loader2 } from 'lucide-react';
-import { passportApi } from '@/lib/api/passport';
+import { followsApi } from '@/lib/api/follows';
 
 interface FollowButtonProps {
   userId: string;
@@ -37,9 +37,11 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await passportApi.followUser(userId);
-      setIsFollowing(response.following);
-      onFollowChange?.(response.following);
+      if (previousState) {
+        await followsApi.unfollowUser(userId);
+      } else {
+        await followsApi.followUser(userId);
+      }
     } catch {
       // Revert state if API request failed
       setIsFollowing(previousState);

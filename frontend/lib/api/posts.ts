@@ -7,21 +7,36 @@ export const postsApi = {
     return response.data.data!;
   },
 
-  getPostById: async (postId: string): Promise<Post> => {
-    const response = await apiClient.get<APIResponse<Post>>(`/posts/${postId}/`);
+  getPostById: async (slug: string): Promise<Post> => {
+    const response = await apiClient.get<APIResponse<Post>>(`/posts/${slug}/`);
     return response.data.data!;
   },
 
-  getPostComments: async (postId: string): Promise<Comment[]> => {
-    const response = await apiClient.get<APIResponse<Comment[]>>(`/comments/`, {
-      params: { post_id: postId },
-    });
+  getPostBySlug: async (slug: string): Promise<Post> => {
+    const response = await apiClient.get<APIResponse<Post>>(`/posts/${slug}/`);
+    return response.data.data!;
+  },
+
+  getPostComments: async (slug: string): Promise<Comment[]> => {
+    const response = await apiClient.get<APIResponse<Comment[]>>(`/posts/${slug}/comments/`);
     return response.data.data || [];
   },
 
-  addComment: async (postId: string, content: string, parentId?: string): Promise<Comment> => {
-    const response = await apiClient.post<APIResponse<Comment>>(`/comments/`, {
-      post_id: postId,
+  getComments: async (slug: string): Promise<Comment[]> => {
+    const response = await apiClient.get<APIResponse<Comment[]>>(`/posts/${slug}/comments/`);
+    return response.data.data || [];
+  },
+
+  addComment: async (slug: string, content: string, parentId?: string): Promise<Comment> => {
+    const response = await apiClient.post<APIResponse<Comment>>(`/posts/${slug}/comments/`, {
+      content,
+      parent_id: parentId || null,
+    });
+    return response.data.data!;
+  },
+
+  createComment: async (slug: string, content: string, parentId?: string): Promise<Comment> => {
+    const response = await apiClient.post<APIResponse<Comment>>(`/posts/${slug}/comments/`, {
       content,
       parent_id: parentId || null,
     });
@@ -33,23 +48,24 @@ export const postsApi = {
     return response.data.data!;
   },
 
-  deletePost: async (postId: string): Promise<void> => {
-    await apiClient.delete(`/posts/${postId}/`);
+  deletePost: async (slug: string): Promise<void> => {
+    await apiClient.delete(`/posts/${slug}/`);
   },
 
-  reportPost: async (postId: string, reason: string, description?: string): Promise<void> => {
-    await apiClient.post(`/moderation/reports/`, {
-      content_type: 'POST',
-      target_id: postId,
+  reportPost: async (slug: string, reason: string, description?: string): Promise<void> => {
+    await apiClient.post(`/posts/${slug}/report/`, {
       reason,
       description,
     });
   },
 
-  likePost: async (postId: string): Promise<{ liked: boolean; likes_count: number }> => {
-    const response = await apiClient.post<APIResponse<{ liked: boolean; likes_count: number }>>(`/interactions/like/`, {
-      post_id: postId,
-    });
+  likePost: async (slug: string): Promise<{ liked: boolean; likes_count: number }> => {
+    const response = await apiClient.post<APIResponse<{ liked: boolean; likes_count: number }>>(`/posts/${slug}/like/`);
+    return response.data.data!;
+  },
+
+  toggleLike: async (slug: string): Promise<{ liked: boolean; likes_count: number }> => {
+    const response = await apiClient.post<APIResponse<{ liked: boolean; likes_count: number }>>(`/posts/${slug}/like/`);
     return response.data.data!;
   },
 };
