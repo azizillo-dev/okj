@@ -252,14 +252,4 @@ LOGGING = {
 SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 
 
-def sentry_before_send(event, hint):
-    """
-    ApplicationError (400 biznes xatoliklari) Sentry'ga yuborilmasligini
-    ta'minlovchi before_send hook. Faqat 500 va kutilmagan xatolar yuboriladi.
-    """
-    if "exc_info" in hint:
-        exc_type, exc_value, tb = hint["exc_info"]
-        from core.exceptions import ApplicationError
-        if isinstance(exc_value, ApplicationError):
-            return None
-    return event
+from core.exceptions import sentry_before_send  # noqa: F401
