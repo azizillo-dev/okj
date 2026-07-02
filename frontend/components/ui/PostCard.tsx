@@ -253,11 +253,14 @@ export const PostCard: React.FC<PostCardProps> = React.memo(({ post, onLikeToggl
         )}
       >
         <div className="flex items-center gap-4">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.88 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 15 }}
             type="button"
             onClick={() => handleLike()}
             className={clsx(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors active:scale-95',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors',
               isLiked
                 ? 'text-rose-500 bg-rose-500/10 font-bold'
                 : isQuote
@@ -266,11 +269,15 @@ export const PostCard: React.FC<PostCardProps> = React.memo(({ post, onLikeToggl
             )}
             aria-label="Like bosish"
           >
-            <Heart className={clsx('w-4 h-4', isLiked && 'fill-rose-500')} />
+            <motion.div animate={isLiked ? { scale: [1, 1.35, 1] } : { scale: 1 }} transition={{ duration: 0.25 }}>
+              <Heart className={clsx('w-4 h-4', isLiked && 'fill-rose-500')} />
+            </motion.div>
             <span>{likesCount}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.92 }}
             type="button"
             onClick={() => setShowCommentsPreview((prev) => !prev)}
             className={clsx('flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors', isQuote ? 'hover:bg-okj-parchment-text/10' : 'hover:bg-okj-surface')}
@@ -278,29 +285,36 @@ export const PostCard: React.FC<PostCardProps> = React.memo(({ post, onLikeToggl
           >
             <MessageCircle className="w-4 h-4" />
             <span>{post.comments_count || 0}</span>
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             type="button"
             onClick={() => setIsShareOpen(true)}
             className={clsx('p-1.5 rounded-full transition-colors', isQuote ? 'hover:bg-okj-parchment-text/10' : 'hover:bg-okj-surface')}
             aria-label="Ulashish"
           >
             <Share2 className="w-4 h-4" />
-          </button>
+          </motion.button>
         </div>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 12 }}
           type="button"
           onClick={toggleBookmark}
           className={clsx(
-            'p-1.5 rounded-full transition-colors active:scale-95',
+            'p-1.5 rounded-full transition-colors',
             isBookmarked ? 'text-okj-gold' : isQuote ? 'hover:bg-okj-parchment-text/10' : 'hover:bg-okj-surface'
           )}
           aria-label="Saqlab qo'yish"
         >
-          <Bookmark className={clsx('w-4 h-4', isBookmarked && 'fill-okj-gold')} />
-        </button>
+          <motion.div animate={isBookmarked ? { rotate: [0, -15, 15, 0], scale: [1, 1.25, 1] } : { scale: 1 }} transition={{ duration: 0.3 }}>
+            <Bookmark className={clsx('w-4 h-4', isBookmarked && 'fill-okj-gold')} />
+          </motion.div>
+        </motion.button>
       </div>
 
       {/* Comments Preview Panel */}

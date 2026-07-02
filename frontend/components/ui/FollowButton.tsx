@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 import { UserCheck, UserPlus, Loader2 } from 'lucide-react';
 import { passportApi } from '@/lib/api/passport';
 
@@ -49,11 +50,14 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
   };
 
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.94 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
       onClick={handleClick}
       disabled={isLoading}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-display font-medium text-sm transition-all duration-200 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-display font-medium text-sm transition-colors disabled:opacity-70 disabled:cursor-not-allowed',
         isFollowing
           ? 'bg-okj-surface text-okj-text-primary border border-okj-card-border hover:border-rose-500/50 hover:text-rose-400'
           : 'bg-okj-gold text-okj-bg-deep font-bold hover:bg-okj-gold/90 shadow-md shadow-okj-gold/20',
@@ -73,6 +77,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
           <span>Obuna bo&apos;lish</span>
         </>
       )}
-    </button>
+    </motion.button>
   );
 };
+
