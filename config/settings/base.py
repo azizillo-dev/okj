@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "notifications",
     "feed_ranking",
     "search",
+    "passport",
 ]
 
 MIDDLEWARE = [
