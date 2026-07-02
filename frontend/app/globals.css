@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+:root {
+  --okj-bg-deep: #17233D;
+  --okj-surface: #1B2740;
+  --okj-card: #202E4D;
+  --okj-card-border: #2C3A5C;
+  --okj-gold: #D3A85C;
+  --okj-parchment: #EDE4D3;
+  --okj-parchment-text: #3A2E1C;
+  --okj-terracotta: #C1694A;
+  --okj-text-primary: #F3EDE0;
+  --okj-text-secondary: #9BA6C4;
+  --okj-text-muted: #6B7694;
+}
+
+@theme {
+  --color-okj-bg-deep: #17233D;
+  --color-okj-surface: #1B2740;
+  --color-okj-card: #202E4D;
+  --color-okj-card-border: #2C3A5C;
+  --color-okj-gold: #D3A85C;
+  --color-okj-parchment: #EDE4D3;
+  --color-okj-parchment-text: #3A2E1C;
+  --color-okj-terracotta: #C1694A;
+  --color-okj-text-primary: #F3EDE0;
+  --color-okj-text-secondary: #9BA6C4;
+  --color-okj-text-muted: #6B7694;
+
+  --font-display: var(--font-display), 'Fraunces', serif;
+  --font-body: var(--font-body), 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--okj-bg-deep);
+  color: var(--okj-text-primary);
+  font-family: var(--font-body);
+}
+
+/* Scrollbar customizations */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #17233D;
+}
+::-webkit-scrollbar-thumb {
+  background: #2C3A5C;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D3A85C;
+}
