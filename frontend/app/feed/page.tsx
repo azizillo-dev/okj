@@ -5,7 +5,6 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Compass, TrendingUp, Flame, RefreshCw, AlertCircle, Sparkles } from 'lucide-react';
 import { postsApi } from '@/lib/api/posts';
-import { Post, PostType } from '@/lib/api/types';
 import { PostCard, IntentTag, SkeletonCard } from '@/components/ui';
 import { GlassCard, GlassButton } from '@/components/ui/glass';
 
@@ -37,56 +36,8 @@ export default function FeedPage() {
   } = useInfiniteQuery({
     queryKey: ['feed', activeFilter],
     queryFn: async ({ pageParam = 1 }) => {
-      try {
-        const res = await postsApi.getFeed({ page: pageParam, type: activeFilter || undefined });
-        return res;
-      } catch {
-        // Fallback realistic demo feed if backend server offline
-        return {
-          count: 3,
-          next: pageParam < 3 ? 'has_more' : null,
-          previous: null,
-          results: [
-            {
-              id: `post-${pageParam}-1`,
-              user: { id: 'u1', username: 'navoiy_fan', first_name: 'Alisher', last_name: 'Rustamov', okj_id: 'OKJ-10492', total_xp: 1450 },
-              post_type: 'QUOTE' as PostType,
-              content: 'Odamiylik deb bilg\'il odamni, Onikim yo\'qtur xalq g\'amidan g\'ami.',
-              book: { id: 'b1', title: 'Xamsai Mutahayyirin', slug: 'xamsai-mutahayyirin', authors: [{ id: 'a1', name: 'Alisher Navoiy' }] },
-              quote_page: 45,
-              media: [],
-              likes_count: 142 + (pageParam * 5),
-              comments_count: 18,
-              created_at: new Date().toISOString(),
-            },
-            {
-              id: `post-${pageParam}-2`,
-              user: { id: 'u2', username: 'bookworm_uz', first_name: 'Malika', last_name: 'Saidova', okj_id: 'OKJ-20511', total_xp: 800 },
-              post_type: 'EXCHANGE' as PostType,
-              title: 'O\'tkan kunlar (Klassik nashr) almashamiz',
-              content: 'Juda toza o\'qilgan kitob. o\'rniga Stiven King yoki Rey Bredberi asarlaridan biriga almashish niyatim bor.',
-              price: 35000,
-              book: { id: 'b2', title: 'O\'tkan kunlar', slug: 'otkan-kunlar', authors: [{ id: 'a2', name: 'Abdulla Qodiriy' }] },
-              media: [{ id: 'm1', file_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80', media_type: 'IMAGE' }],
-              likes_count: 38 + (pageParam * 2),
-              comments_count: 12,
-              created_at: new Date().toISOString(),
-            },
-            {
-              id: `post-${pageParam}-3`,
-              user: { id: 'u3', username: 'intellect_99', first_name: 'Sardor', last_name: 'Ismoilov', okj_id: 'OKJ-31005', total_xp: 2100 },
-              post_type: 'REVIEW' as PostType,
-              title: 'Yulduzli tunlar — Tarixiy haqiqat fojiasi',
-              content: 'Bobur mirzoning hayot yo\'lini chuqur tahlil qilgan eng kuchli o\'zbek romanlaridan biri. Har bir kitobxon o\'qishi shart deb hisoblayman.',
-              book: { id: 'b3', title: 'Yulduzli tunlar', slug: 'yulduzli-tunlar', authors: [{ id: 'a3', name: 'Pirimqul Qodirov' }] },
-              media: [],
-              likes_count: 85 + (pageParam * 10),
-              comments_count: 24,
-              created_at: new Date().toISOString(),
-            },
-          ] as Post[],
-        };
-      }
+      const res = await postsApi.getFeed({ page: pageParam, type: activeFilter || undefined });
+      return res;
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
