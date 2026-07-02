@@ -4,3 +4,5 @@ export * from './GlassButton';
 export * from './GlassModal';
 export * from './GlassNavbar';
 export * from './GlassBottomSheet';
+export * from './GlassSkeleton';
+
