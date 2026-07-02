@@ -95,7 +95,6 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({ post, initialCom
     try {
       const newComment = await postsApi.addComment(post.id, content, parentId);
       if (parentId) {
-        // Add nested reply to parent thread
         setComments((prev) =>
           prev.map((c) => {
             if (c.id === parentId) {
@@ -107,33 +106,8 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({ post, initialCom
       } else {
         setComments((prev) => [newComment, ...prev]);
       }
-    } catch {
-      // Optimistic fallback addition
-      const optimisticComment: Comment = {
-        id: `local-${Date.now()}`,
-        post_id: post.id,
-        parent_id: parentId || null,
-        user: {
-          id: currentUserId,
-          username: 'alisher_rustamov',
-          first_name: 'Alisher',
-          last_name: 'Rustamov',
-          okj_id: 'OKJ-10492',
-          total_xp: 1450,
-        },
-        content,
-        likes_count: 0,
-        created_at: new Date().toISOString(),
-        replies: [],
-      };
-
-      if (parentId) {
-        setComments((prev) =>
-          prev.map((c) => (c.id === parentId ? { ...c, replies: [...(c.replies || []), optimisticComment] } : c))
-        );
-      } else {
-        setComments((prev) => [optimisticComment, ...prev]);
-      }
+    } catch (err: unknown) {
+      alert((err as { message?: string })?.message || "Fikr qoldirishda xatolik yuz berdi. Tarmoqni tekshiring.");
     }
   };
 

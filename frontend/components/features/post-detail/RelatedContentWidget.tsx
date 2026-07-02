@@ -9,21 +9,12 @@ import { BookCover3D } from '@/components/ui/premium';
 
 interface RelatedContentWidgetProps {
   currentBook?: Book | null;
+  relatedBooks?: Book[];
   relatedPosts: Post[];
 }
 
-export const RelatedContentWidget: React.FC<RelatedContentWidgetProps> = ({ currentBook, relatedPosts }) => {
-  // Sample fallback related books if no actual list passed
-  const sampleBooks: Book[] = currentBook
-    ? [
-        currentBook,
-        { id: 'rel-1', title: 'O\'tkan kunlar', slug: 'otkan-kunlar', authors: [{ id: 'a2', name: 'Abdulla Qodiriy' }] },
-        { id: 'rel-2', title: 'Alkimyogar', slug: 'alkimyogar', authors: [{ id: 'a3', name: 'Paulo Koelyo' }] },
-      ]
-    : [
-        { id: 'rel-1', title: 'O\'tkan kunlar', slug: 'otkan-kunlar', authors: [{ id: 'a2', name: 'Abdulla Qodiriy' }] },
-        { id: 'rel-2', title: 'Alkimyogar', slug: 'alkimyogar', authors: [{ id: 'a3', name: 'Paulo Koelyo' }] },
-      ];
+export const RelatedContentWidget: React.FC<RelatedContentWidgetProps> = ({ currentBook, relatedBooks = [], relatedPosts }) => {
+  const booksToDisplay = relatedBooks.length > 0 ? relatedBooks : currentBook ? [currentBook] : [];
 
   return (
     <div className="space-y-8 pt-4">
@@ -41,7 +32,7 @@ export const RelatedContentWidget: React.FC<RelatedContentWidgetProps> = ({ curr
         </div>
 
         <div className="flex items-center gap-8 overflow-x-auto pb-4 pt-2 no-scrollbar px-2 justify-start sm:justify-around">
-          {sampleBooks.map((b) => (
+          {booksToDisplay.map((b) => (
             <div key={b.id} className="shrink-0 text-center">
               <BookCover3D book={b} />
             </div>
