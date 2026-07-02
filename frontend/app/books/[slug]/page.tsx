@@ -15,18 +15,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ slu
   try {
     book = await booksApi.getBookBySlug(slug);
   } catch {
-    // Fallback static demo book when backend is offline or during standalone rendering
-    book = {
-      id: 'demo-1',
-      title: slug === 'xamsai-mutahayyirin' ? 'Xamsai Mutahayyirin' : slug === 'otkan-kunlar' ? 'O\'tkan kunlar' : 'Yulduzli tunlar',
-      slug: slug,
-      authors: [{ id: 'a-1', name: slug === 'otkan-kunlar' ? 'Abdulla Qodiriy' : 'Pirimqul Qodirov' }],
-      isbn_13: '978-9943-01-234-5',
-      average_rating: 4.85,
-      ratings_count: 312,
-      description:
-        "Ushbu asar O'zbekiston adabiyotining eng yorqin namunalardan biri bo'lib, inson ruhiyatining chuqur qatlamlarini, tarixiy jarayonlar va ma'naviy qadriyatlarni badiiy mahorat bilan ochib beradi. Kitobxonlar orasida yuqori baholangan va OKJ elektron pasportlarida eng ko'p o'qilgan kitoblar ro'yxatidan joy olgan.",
-    };
+    book = null;
   }
 
   if (!book) {
