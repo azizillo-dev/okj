@@ -1,14 +1,17 @@
 'use client';
 
-import React, { use } from 'react';
+import React, { use, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Trophy, BookOpen, Layers, Flame, Share2, Shield } from 'lucide-react';
+import { Trophy, BookOpen, Layers, Flame, Share2, Shield, Gift } from 'lucide-react';
 import { passportApi } from '@/lib/api/passport';
 import { PassportAnalytics } from '@/lib/api/types';
 import { Avatar, PassportStamp, FollowButton, SkeletonCard } from '@/components/ui';
+import { ReadingHeatmap, DailySpinWheel } from '@/components/ui/premium';
+import { GlassButton } from '@/components/ui/glass';
 
 export default function UserProfilePage({ params }: { params: Promise<{ okjId: string }> }) {
   const { okjId } = use(params);
+  const [isSpinOpen, setIsSpinOpen] = useState(false);
 
   // Check if viewing self vs someone else
   const isSelf = okjId === 'OKJ-10492' || okjId === 'me';
@@ -50,6 +53,29 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
       }
     },
   });
+
+  // Mock 365 days contribution data for demo
+  const sampleContributions = React.useMemo(() => {
+    const today = new Date();
+    const list = [];
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - (365 - i));
+      const dateStr = d.toISOString().split('T')[0];
+      // Generate realistic reading patterns
+      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+      const pages = Math.random() > 0.4 ? (isWeekend ? Math.floor(Math.random() * 85) + 20 : Math.floor(Math.random() * 45)) : 0;
+      if (pages > 0) {
+        list.push({
+          date: dateStr,
+          pagesRead: pages,
+          xpEarned: Math.floor(pages * 0.7),
+          bookTitle: pages > 50 ? 'Yulduzli tunlar' : 'O\'tkan kunlar',
+        });
+      }
+    }
+    return list;
+  }, []);
 
   if (isLoading || !passport) {
     return (
@@ -105,8 +131,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
             </div>
           </div>
 
-          {/* Action Button: Subscribe vs Self status */}
-          <div className="shrink-0 flex items-center gap-3">
+          {/* Action Buttons */}
+          <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3">
+            {isSelf && (
+              <GlassButton variant="gold" size="sm" onClick={() => setIsSpinOpen(true)}>
+                <Gift className="w-4 h-4" />
+                <span>Kunlik G&apos;ildirak</span>
+              </GlassButton>
+            )}
             {!isSelf ? (
               <FollowButton userId={passport.user.id} />
             ) : (
@@ -146,6 +178,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
         </div>
       </div>
 
+      {/* GitHub-style 365-day Reading Heatmap */}
+      <ReadingHeatmap contributions={sampleContributions} year={new Date().getFullYear()} />
+
       {/* Passport Stamps Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -164,6 +199,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
           ))}
         </div>
       </div>
+
+      {/* Duolingo Daily Spin Wheel Modal */}
+      <DailySpinWheel
+        isOpen={isSpinOpen}
+        onClose={() => setIsSpinOpen(false)}
+        onRequestSpin={async () => {
+          // Simulate API call resolving to reward index 1 (+100 XP)
+          return new Promise((resolve) => setTimeout(() => resolve(1), 300));
+        }}
+      />
     </div>
   );
 }

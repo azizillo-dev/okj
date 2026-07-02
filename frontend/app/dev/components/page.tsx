@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layers, CheckCircle2 } from 'lucide-react';
+import { Layers, Sparkles } from 'lucide-react';
 import { Avatar, PassportStamp, BookCard, PostCard, FollowButton, IntentTag, SkeletonCard } from '@/components/ui';
+import { BookCover3D, ReadingHeatmap, DailySpinWheel } from '@/components/ui/premium';
+import { GlassCard, GlassButton } from '@/components/ui/glass';
 import { Post, Book } from '@/lib/api/types';
 
 export default function ComponentsPreviewPage() {
   const [activeTag, setActiveTag] = useState('Barchasi');
+  const [isSpinOpen, setIsSpinOpen] = useState(false);
 
   const sampleUser = {
     id: 'u-demo',
@@ -53,140 +56,122 @@ export default function ComponentsPreviewPage() {
     created_at: new Date().toISOString(),
   };
 
+  const sampleHeatmapData = React.useMemo(() => {
+    const list = [];
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - (365 - i));
+      const pages = Math.random() > 0.45 ? Math.floor(Math.random() * 70) : 0;
+      if (pages > 0) {
+        list.push({ date: d.toISOString().split('T')[0], pagesRead: pages, xpEarned: Math.floor(pages * 0.8) });
+      }
+    }
+    return list;
+  }, []);
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
       {/* Header */}
-      <div className="p-6 md:p-8 rounded-3xl bg-okj-surface border border-okj-card-border space-y-3">
+      <GlassCard variant="prominent" className="p-6 md:p-8 space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-okj-gold/15 text-okj-gold text-xs font-display font-bold uppercase tracking-widest">
           <Layers className="w-3.5 h-3.5" />
           <span>Design Systems Showcase</span>
         </div>
         <h1 className="font-display font-black text-3xl md:text-4xl text-okj-text-primary">
-          OKJ Design Token & UI Komponentlar Katalogi
+          OKJ 10X Premium UI & Glass Primitivlar Katalogi
         </h1>
         <p className="text-sm text-okj-text-secondary max-w-2xl font-body">
-          Bu sahifada barcha 7 ta tasdiqlangan UI komponentlar (Storybook uslubida) interaktiv holatida namoyish etilgan.
+          Bu sahifada barcha Apple VisionOS Glass Primitivlar hamda 3D Kitob muqovasi, GitHub Heatmap va Duolingo G&apos;ildiragi namoyish etilgan.
         </p>
-      </div>
+      </GlassCard>
 
-      {/* 1. Avatar Showcase */}
+      {/* NEW 1: 3D Book Cover Showcase */}
       <section className="space-y-4">
-        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-okj-card-border pb-2">
-          1. &lt;Avatar /&gt; Komponenti (sm | md | lg)
+        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-white/10 pb-2 flex items-center gap-2">
+          <Sparkles className="w-5 h-5" />
+          <span>NEW 1. &lt;BookCover3D /&gt; Komponenti (Pure CSS 3D Perspective & Spine)</span>
         </h2>
-        <div className="p-6 rounded-2xl bg-okj-card border border-okj-card-border flex flex-wrap items-center gap-6">
-          <div className="flex flex-col items-center gap-2">
-            <Avatar user={sampleUser} size="sm" />
-            <span className="text-xs text-okj-text-muted font-mono">sm (32px)</span>
+        <div className="p-8 rounded-3xl bg-okj-surface/40 border border-white/10 flex flex-wrap items-center justify-around gap-8">
+          <div className="text-center">
+            <BookCover3D book={sampleBook} />
+            <span className="text-xs text-okj-text-muted font-mono block mt-2">Hover qiling (3D Tilt)</span>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <Avatar user={sampleUser} size="md" />
-            <span className="text-xs text-okj-text-muted font-mono">md (44px)</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <Avatar user={sampleUser} size="lg" />
-            <span className="text-xs text-okj-text-muted font-mono">lg (64px)</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <Avatar user={{ id: 'hash-2', first_name: 'Ziyoda', last_name: 'Karimova' }} size="md" />
-            <span className="text-xs text-okj-text-muted font-mono">Hash rang (Z.K)</span>
+          <div className="text-center">
+            <BookCover3D book={{ ...sampleBook, title: 'O\'tkan kunlar', authors: [{ id: '2', name: 'Abdulla Qodiriy' }] }} />
+            <span className="text-xs text-okj-text-muted font-mono block mt-2">2-kitob muqovasi</span>
           </div>
         </div>
       </section>
 
-      {/* 2. PassportStamp Showcase */}
+      {/* NEW 2: Reading Heatmap Showcase */}
       <section className="space-y-4">
-        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-okj-card-border pb-2">
-          2. &lt;PassportStamp /&gt; Komponenti (Unlocked & Locked)
+        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-white/10 pb-2 flex items-center gap-2">
+          <Sparkles className="w-5 h-5" />
+          <span>NEW 2. &lt;ReadingHeatmap /&gt; Komponenti (365 kunlik GitHub Uslubi)</span>
         </h2>
-        <div className="p-6 rounded-2xl bg-okj-card border border-okj-card-border flex flex-wrap gap-6">
-          <PassportStamp icon="🏛️" label="Tarix Bilag'oni" locked={false} />
-          <PassportStamp icon="🔥" label="7 Kunlik Seriya" locked={false} />
-          <PassportStamp icon="✍️" label="Iqtibos Ustasi" locked={false} />
-          <PassportStamp icon="💎" label="Afsonaviy Daraja" locked={true} />
-        </div>
+        <ReadingHeatmap contributions={sampleHeatmapData} year={new Date().getFullYear()} />
       </section>
 
-      {/* 3. BookCard Showcase */}
+      {/* NEW 3: Daily Spin Wheel Showcase */}
       <section className="space-y-4">
-        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-okj-card-border pb-2">
-          3. &lt;BookCard /&gt; Komponenti (Compact & Full)
+        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-white/10 pb-2 flex items-center gap-2">
+          <Sparkles className="w-5 h-5" />
+          <span>NEW 3. &lt;DailySpinWheel /&gt; Komponenti (Framer Motion & Confetti)</span>
+        </h2>
+        <GlassCard className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h4 className="font-display font-bold text-lg text-okj-text-primary">Kunlik Omad G&apos;ildiragi Testi</h4>
+            <p className="text-xs text-okj-text-secondary">
+              G&apos;ildirakni aylantiring, backend javobiga ko&apos;ra to&apos;xtaydi va Confetti otiladi.
+            </p>
+          </div>
+          <GlassButton variant="gold" size="md" onClick={() => setIsSpinOpen(true)}>
+            G&apos;ildirakni Ochish
+          </GlassButton>
+        </GlassCard>
+        <DailySpinWheel
+          isOpen={isSpinOpen}
+          onClose={() => setIsSpinOpen(false)}
+          onRequestSpin={async () => new Promise((res) => setTimeout(() => res(1), 300))}
+        />
+      </section>
+
+      {/* NEW 4: Glass Primitives Showcase */}
+      <section className="space-y-4">
+        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-white/10 pb-2">
+          NEW 4. Apple VisionOS Glass Primitives (&lt;GlassCard /&gt;, &lt;GlassButton /&gt;)
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <span className="text-xs text-okj-text-muted font-mono">Compact variant:</span>
-            <BookCard book={sampleBook} variant="compact" />
-          </div>
-          <div className="space-y-2 md:col-span-2 max-w-xs">
-            <span className="text-xs text-okj-text-muted font-mono">Full variant:</span>
-            <BookCard book={sampleBook} variant="full" />
-          </div>
+          <GlassCard variant="subtle" className="p-5">
+            <h4 className="font-display font-bold text-sm text-okj-text-primary">Subtle GlassCard</h4>
+            <p className="text-xs text-okj-text-secondary mt-1">Yengil blur va shaffof chegara.</p>
+          </GlassCard>
+          <GlassCard variant="default" interactive className="p-5">
+            <h4 className="font-display font-bold text-sm text-okj-text-primary">Default Interactive</h4>
+            <p className="text-xs text-okj-text-secondary mt-1">Hover qilinganda ko&apos;tariladi.</p>
+          </GlassCard>
+          <GlassCard variant="prominent" className="p-5">
+            <h4 className="font-display font-bold text-sm text-okj-gold">Prominent Gold Glow</h4>
+            <p className="text-xs text-okj-text-secondary mt-1">Tilla chet va chuqur shisha nuri.</p>
+          </GlassCard>
+        </div>
+        <div className="flex flex-wrap gap-4 pt-2">
+          <GlassButton variant="primary">Primary GlassButton</GlassButton>
+          <GlassButton variant="secondary">Secondary GlassButton</GlassButton>
+          <GlassButton variant="gold">Gold GlassButton</GlassButton>
+          <GlassButton variant="ghost">Ghost Button</GlassButton>
         </div>
       </section>
 
-      {/* 4. PostCard Showcase */}
-      <section className="space-y-4">
-        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-okj-card-border pb-2">
-          4. &lt;PostCard /&gt; Komponenti (Quote vs Exchange/Sell variantlari)
+      {/* Existing Components */}
+      <section className="space-y-4 pt-6 border-t border-white/10">
+        <h2 className="font-display font-bold text-xl text-okj-text-secondary pb-2">
+          Mavjud Asosiy UI Komponentlar
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <span className="text-xs text-okj-text-muted font-mono">Quote post (Parchment fon):</span>
-            <PostCard post={sampleQuotePost} />
-          </div>
-          <div className="space-y-2">
-            <span className="text-xs text-okj-text-muted font-mono">Exchange post (Terracotta urg&apos;u border):</span>
-            <PostCard post={sampleExchangePost} />
-          </div>
-        </div>
-      </section>
-
-      {/* 5. FollowButton Showcase */}
-      <section className="space-y-4">
-        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-okj-card-border pb-2">
-          5. &lt;FollowButton /&gt; Komponenti (Optimistic UI holatlari)
-        </h2>
-        <div className="p-6 rounded-2xl bg-okj-card border border-okj-card-border flex flex-wrap items-center gap-6">
-          <FollowButton userId="user-a" initialFollowing={false} />
-          <FollowButton userId="user-b" initialFollowing={true} />
-        </div>
-      </section>
-
-      {/* 6. IntentTag Showcase */}
-      <section className="space-y-4">
-        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-okj-card-border pb-2">
-          6. &lt;IntentTag /&gt; Komponenti
-        </h2>
-        <div className="p-6 rounded-2xl bg-okj-card border border-okj-card-border flex flex-wrap items-center gap-3">
-          {['Barchasi', 'Iqtiboslar', 'Taqrizlar', 'Almashish'].map((tag) => (
-            <IntentTag
-              key={tag}
-              type={tag}
-              active={activeTag === tag}
-              onClick={() => setActiveTag(tag)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* 7. SkeletonCard Showcase */}
-      <section className="space-y-4">
-        <h2 className="font-display font-bold text-xl text-okj-gold border-b border-okj-card-border pb-2">
-          7. &lt;SkeletonCard /&gt; Komponenti (post | book | profile)
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <span className="text-xs text-okj-text-muted font-mono block mb-2">post variant:</span>
-            <SkeletonCard variant="post" />
-          </div>
-          <div>
-            <span className="text-xs text-okj-text-muted font-mono block mb-2">book variant:</span>
-            <SkeletonCard variant="book" />
-          </div>
-          <div>
-            <span className="text-xs text-okj-text-muted font-mono block mb-2">profile variant:</span>
-            <SkeletonCard variant="profile" />
-          </div>
+          <PostCard post={sampleQuotePost} />
+          <PostCard post={sampleExchangePost} />
         </div>
       </section>
     </div>
