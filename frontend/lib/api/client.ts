@@ -142,11 +142,16 @@ export const formatAPIError = (error: AxiosError<APIResponse>): APIErrorDetail =
   if (error.response?.data?.error) {
     return error.response.data.error;
   }
+  const status = error.response?.status;
+  let defaultMsg = 'Server bilan bog\'lanishda xatolik yuz berdi.';
+  if (status === 403) defaultMsg = 'Ushbu amalni bajarish uchun sizda ruxsat yo\'q (403 Forbidden).';
+  else if (status === 404) defaultMsg = 'So\'ralgan ma\'lumot yoki sahifa topilmadi (404 Not Found).';
+  else if (status && status >= 500) defaultMsg = 'Serverda ichki xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko\'ring (5xx).';
+  else if (error.code === 'ERR_NETWORK') defaultMsg = 'Tarmoq aloqasi mavjud emas. Offline rejimidasiz.';
+
   return {
-    code: error.response?.status ? `HTTP_${error.response.status}` : error.code === 'ECONNABORTED' ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR',
-    message: error.code === 'ECONNABORTED'
-      ? 'So\'rov vaqti tugadi. Server javob bermadi.'
-      : error.response?.data?.error?.message || error.message || 'Server bilan bog\'lanishda xatolik yuz berdi.',
+    code: status ? `HTTP_${status}` : error.code === 'ECONNABORTED' ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR',
+    message: error.code === 'ECONNABORTED' ? 'So\'rov vaqti tugadi. Server javob bermadi.' : error.response?.data?.error?.message || defaultMsg,
     details: error.response?.data || null,
   };
 };
