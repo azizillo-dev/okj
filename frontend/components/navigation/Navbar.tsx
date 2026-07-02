@@ -37,7 +37,7 @@ export const Navbar: React.FC<{ onOpenCreateModal?: () => void }> = ({ onOpenCre
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Asosiy navigatsiya">
           {navLinks.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
@@ -46,6 +46,7 @@ export const Navbar: React.FC<{ onOpenCreateModal?: () => void }> = ({ onOpenCre
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={clsx(
                   'flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors',
                   isActive
@@ -64,6 +65,7 @@ export const Navbar: React.FC<{ onOpenCreateModal?: () => void }> = ({ onOpenCre
         <div className="flex items-center gap-3">
           <button
             onClick={onOpenCreateModal}
+            aria-label="Yangi post yozish"
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-okj-gold text-okj-bg-deep font-display font-bold text-sm shadow-md hover:bg-okj-gold/90 transition-all active:scale-95 shrink-0"
           >
             <PlusCircle className="w-4 h-4 stroke-[2.5]" />
@@ -73,7 +75,7 @@ export const Navbar: React.FC<{ onOpenCreateModal?: () => void }> = ({ onOpenCre
       </div>
 
       {/* Mobile Bottom Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-okj-surface/95 backdrop-blur-lg border-t border-okj-card-border px-2 py-1.5 flex items-center justify-around">
+      <nav aria-label="Mobil navigatsiya" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-okj-surface/95 backdrop-blur-lg border-t border-okj-card-border px-2 py-1.5 flex items-center justify-around">
         {navLinks.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
@@ -82,6 +84,7 @@ export const Navbar: React.FC<{ onOpenCreateModal?: () => void }> = ({ onOpenCre
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={clsx(
                 'flex flex-col items-center justify-center py-1 px-3 rounded-xl text-[11px] font-medium transition-colors min-w-[56px]',
                 isActive ? 'text-okj-gold' : 'text-okj-text-secondary'
@@ -92,7 +95,7 @@ export const Navbar: React.FC<{ onOpenCreateModal?: () => void }> = ({ onOpenCre
             </Link>
           );
         })}
-      </div>
+      </nav>
     </header>
   );
 };

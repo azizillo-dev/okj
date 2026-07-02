@@ -56,6 +56,7 @@ export const FullscreenMediaViewer: React.FC<FullscreenMediaViewerProps> = ({
         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 select-none"
         onClick={onClose}
         role="dialog"
+        aria-modal="true"
         aria-label="To'liq ekranda ko'rish modali"
       >
         {/* Top Controls Bar */}

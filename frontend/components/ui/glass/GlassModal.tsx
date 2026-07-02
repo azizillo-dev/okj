@@ -24,15 +24,42 @@ export const GlassModal: React.FC<GlassModalProps> = ({
   maxWidth = 'md',
   className,
 }) => {
+  const modalRef = React.useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
+      // Focus Trap inside Modal
+      if (e.key === 'Tab' && isOpen && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement?.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement?.focus();
+            e.preventDefault();
+          }
+        }
+      }
     };
+
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
+      // Auto focus modal
+      setTimeout(() => {
+        modalRef.current?.focus();
+      }, 50);
     }
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
@@ -51,14 +78,20 @@ export const GlassModal: React.FC<GlassModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200 motion-reduce:animate-none"
       role="dialog"
       aria-modal="true"
       aria-label={typeof title === 'string' ? title : 'Modal dialog'}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
+        ref={modalRef}
+        tabIndex={-1}
         className={clsx(
-          'w-full rounded-3xl bg-okj-surface/90 dark:bg-[#1A253D]/90 backdrop-blur-2xl border border-white/15 shadow-[0_24px_64px_rgba(0,0,0,0.6)] flex flex-col max-h-[90vh] overflow-hidden relative animate-in zoom-in-95 duration-200',
+          'w-full rounded-3xl bg-okj-surface/90 dark:bg-[#1A253D]/90 backdrop-blur-2xl border border-white/15 shadow-[0_24px_64px_rgba(0,0,0,0.6)] flex flex-col max-h-[90vh] overflow-hidden relative animate-in zoom-in-95 duration-200 motion-reduce:animate-none outline-none',
+
           maxWidthClasses,
           className
         )}
