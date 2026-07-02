@@ -43,7 +43,7 @@ if not os.getenv("REDIS_PASSWORD"):
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "api.okj.uz").split(",")
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
 
 # PostgreSQL Database (PgBouncer connection pooler bilan ishlashga tayyor)
 DATABASES = {
@@ -75,20 +75,20 @@ if USE_CLOUDFLARE_R2:
 
 # ==============================================================================
 # SECURITY & CORS IN PRODUCTION
-# HTTPS (Let's Encrypt + Nginx) muhitida ishlash uchun sozlamalar.
-# SECURE_PROXY_SSL_HEADER: Nginx X-Forwarded-Proto sarlavhasini Django xavfsizlik
-# tekshiruvlari uchun ishlatishga ruxsat beradi.
 # ==============================================================================
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "https://okj.uz").split(",")
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://45.148.29.33").split(",")
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True").lower() == "true"
 CORS_ALLOW_CREDENTIALS = True
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+USE_HTTPS = os.getenv("USE_HTTPS", "False").lower() == "true"
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") if USE_HTTPS else None
+SECURE_SSL_REDIRECT = USE_HTTPS
+SESSION_COOKIE_SECURE = USE_HTTPS
+CSRF_COOKIE_SECURE = USE_HTTPS
+SECURE_HSTS_SECONDS = 31536000 if USE_HTTPS else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = USE_HTTPS
+SECURE_HSTS_PRELOAD = USE_HTTPS
 
 # ==============================================================================
 # SENTRY ERROR TRACKING & PERFORMANCE MONITORING (Production)
