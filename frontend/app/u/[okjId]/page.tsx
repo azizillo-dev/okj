@@ -29,64 +29,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
   const { data: passport, isLoading } = useQuery<PassportAnalytics>({
     queryKey: ['passport', okjId],
     queryFn: async () => {
-      try {
-        return await passportApi.getUserPassport(okjId);
-      } catch {
-        // Fallback realistic demo passport data
-        return {
-          okj_id: okjId,
-          user: {
-            id: 'u-10492',
-            username: 'alisher_rustamov',
-            first_name: 'Alisher',
-            last_name: 'Rustamov',
-            okj_id: okjId,
-            total_xp: 1450,
-            level: 14,
-            bio: 'O\'zbek va jahon klassikasiga oshiq kitobxon. Tarixiy romanlar va falsafiy esselar o\'qiyman.',
-            streak_days: 12,
-          },
-          books_read_count: 28,
-          pages_read_count: 8420,
-          current_streak: 12,
-          stamps: [
-            { id: 's1', icon: '🏛️', label: 'Tarix Bilag\'oni', locked: false },
-            { id: 's2', icon: '🔥', label: '7 kunlik o\'qish', locked: false },
-            { id: 's3', icon: '✍️', label: '10 ta iqtibos', locked: false },
-            { id: 's4', icon: '🔁', label: 'Kitob Almashuvchi', locked: false },
-            { id: 's5', icon: '🌟', label: 'G\'azalxon', locked: false },
-            { id: 's6', icon: '📚', label: '100 ta Kitob', locked: true },
-            { id: 's7', icon: '⚡', label: '30 Kunlik Seriya', locked: true },
-            { id: 's8', icon: '💎', label: 'Afsonaviy Taqrizchi', locked: true },
-          ],
-        };
-      }
+      return await passportApi.getUserPassport(okjId);
     },
   });
 
-  // Mock 365 days contribution data for demo
-  const sampleContributions = React.useMemo(() => {
-    const today = new Date();
-    const list = [];
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - (365 - i));
-      const dateStr = d.toISOString().split('T')[0];
-      // Generate realistic reading patterns
-      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-      const hashVal = ((i * 9301 + 49297) % 233280) / 233280;
-      const pages = hashVal > 0.4 ? (isWeekend ? Math.floor(hashVal * 85) + 20 : Math.floor(hashVal * 45)) : 0;
-      if (pages > 0) {
-        list.push({
-          date: dateStr,
-          pagesRead: pages,
-          xpEarned: Math.floor(pages * 0.7),
-          bookTitle: pages > 50 ? 'Yulduzli tunlar' : 'O\'tkan kunlar',
-        });
-      }
-    }
-    return list;
-  }, []);
+  const { data: heatmapData = [] } = useQuery({
+    queryKey: ['heatmap', okjId],
+    queryFn: async () => {
+      return await passportApi.getHeatmap(okjId, new Date().getFullYear());
+    },
+  });
 
   if (isLoading || !passport) {
     return (
@@ -190,7 +142,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
       </div>
 
       {/* GitHub-style 365-day Reading Heatmap */}
-      <ReadingHeatmap contributions={sampleContributions} year={new Date().getFullYear()} />
+      <ReadingHeatmap contributions={heatmapData} year={new Date().getFullYear()} />
 
       {/* Passport Stamps Section */}
       <div className="space-y-4">
@@ -216,8 +168,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
         isOpen={isSpinOpen}
         onClose={() => setIsSpinOpen(false)}
         onRequestSpin={async () => {
-          // Simulate API call resolving to reward index 1 (+100 XP)
-          return new Promise((resolve) => setTimeout(() => resolve(1), 300));
+          const res = await passportApi.spinWheel();
+          return res.prize_index;
         }}
       />
     </div>
