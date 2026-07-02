@@ -72,6 +72,7 @@ if USE_CLOUDFLARE_R2:
         "CacheControl": "max-age=86400",
     }
     DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+    STORAGES["default"]["BACKEND"] = "storages.backends.s3boto3.S3Boto3Storage"
 
 # ==============================================================================
 # SECURITY & CORS IN PRODUCTION
