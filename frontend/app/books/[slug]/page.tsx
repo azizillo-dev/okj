@@ -31,8 +31,20 @@ export default async function BookDetailPage({ params }: { params: Promise<{ slu
 
   if (!book) {
     return (
-      <div className="max-w-4xl mx-auto p-12 text-center text-okj-text-secondary">
-        Kitob topilmadi.
+      <div className="max-w-4xl mx-auto p-12 text-center">
+        <div className="p-8 rounded-3xl bg-okj-card/80 border border-white/10 backdrop-blur-xl max-w-md mx-auto space-y-4 shadow-2xl">
+          <BookOpen className="w-12 h-12 text-okj-gold mx-auto" />
+          <h2 className="font-display font-bold text-xl text-okj-text-primary">Kitob topilmadi</h2>
+          <p className="text-xs text-okj-text-secondary">
+            Siz qidirayotgan kitob OKJ ma&apos;lumotlar bazasidan topilmadi yoki uning manzili o&apos;zgargan.
+          </p>
+          <Link
+            href="/feed"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-okj-gold text-okj-bg-deep font-display font-bold text-xs transition-transform active:scale-95 shadow-md"
+          >
+            Lentaga qaytish
+          </Link>
+        </div>
       </div>
     );
   }
