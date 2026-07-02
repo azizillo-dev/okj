@@ -73,3 +73,26 @@ class UserModerationFlag(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user.username} (Shadow ban: {self.is_shadow_banned})"
+
+
+class AdminActionLog(UUIDModel, TimeStampedModel):
+    """
+    Admin va moderatorlarning operatsion harakatlarini qayd etuvchi audit log jadvali.
+    """
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="admin_actions_performed"
+    )
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="admin_actions_received"
+    )
+    action_type = models.CharField(max_length=50, db_index=True, help_text="m-n: BAN, UNBAN, GRANT_XP, RESOLVE_REPORT")
+    reason = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        verbose_name = "Admin Harakati Logi"
+        verbose_name_plural = "Admin Harakatlari Loglari"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.actor.username} -> {self.action_type} ({self.created_at})"

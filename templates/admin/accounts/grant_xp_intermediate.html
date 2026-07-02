@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="margin: 20px;">
+  <h2>Tanlangan foydalanuvchilarga XP qo'shish</h2>
+  <form action="" method="post">
+    {% csrf_token %}
+    <p><strong>Quyidagi {{ users|length }} ta kitobxonga XP qo'shilmoqda:</strong></p>
+    <ul>
+      {% for user in users %}
+        <li>{{ user.username }} (Joriy XP: {{ user.total_xp }})</li>
+      {% endfor %}
+    </ul>
+    <div style="margin-bottom: 15px;">
+      <label for="xp_amount" style="font-weight: bold;">Qo'shiladigan XP miqdori:</label><br>
+      <input type="number" id="xp_amount" name="xp_amount" value="100" min="1" required style="padding: 5px; width: 150px;">
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label for="reason" style="font-weight: bold;">Sababi:</label><br>
+      <input type="text" id="reason" name="reason" value="Tanlov/Faollik uchun rag'batlantirish" style="padding: 5px; width: 400px;">
+    </div>
+    <input type="hidden" name="action" value="grant_xp">
+    {% for user in users %}
+      <input type="hidden" name="{{ action_checkbox_name }}" value="{{ user.pk }}">
+    {% endfor %}
+    <input type="hidden" name="apply" value="1">
+    <div>
+      <input type="submit" value="XP Qo'shish" class="default" style="padding: 8px 15px; cursor: pointer;">
+      <a href="javascript:history.back()" style="margin-left: 10px;">Bekor qilish</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

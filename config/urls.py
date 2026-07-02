@@ -8,6 +8,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from core.admin_dashboard import AdminDashboardView
 
 
 def health_check(request):
@@ -19,7 +20,8 @@ urlpatterns = [
     # Health check & Monitoring
     path("health/", health_check, name="health_check"),
 
-    # Django Admin Panel
+    # Django Admin Panel & Operational Dashboard
+    path("admin/dashboard/", AdminDashboardView.as_view(), name="admin-dashboard"),
     path("admin/", admin.site.urls),
 
     # OpenAPI 3.0 & Documentation

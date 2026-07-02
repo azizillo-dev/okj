@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="margin: 20px;">
+  <h1 style="margin-bottom: 20px; font-size: 24px; color: #333;">{{ title }}</h1>
+  <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+    
+    <!-- 1. Jami foydalanuvchilar -->
+    <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; min-width: 200px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <h3 style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase;">Jami Kitobxonlar</h3>
+      <p style="margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #2c3e50;">{{ stats.total_users }}</p>
+    </div>
+
+    <!-- 2. Bugungi yangi ro'yxatdan o'tganlar -->
+    <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; min-width: 200px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <h3 style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase;">Bugungi Yangi A'zolar</h3>
+      <p style="margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #27ae60;">+{{ stats.today_users }}</p>
+    </div>
+
+    <!-- 3. PENDING shikoyatlar soni -->
+    <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; min-width: 200px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <h3 style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase;">Kutayotgan Shikoyatlar</h3>
+      <p style="margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #e67e22;">{{ stats.pending_reports }}</p>
+    </div>
+
+    <!-- 4. Shadow ban qilinganlar -->
+    <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; min-width: 200px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <h3 style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase;">Shadow Ban Qilinganlar</h3>
+      <p style="margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #c0392b;">{{ stats.shadow_banned_users }}</p>
+    </div>
+
+    <!-- 5. So'nggi 24 soatda yaratilgan postlar -->
+    <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; min-width: 200px; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <h3 style="margin: 0; font-size: 14px; color: #666; text-transform: uppercase;">So'nggi 24s Postlar</h3>
+      <p style="margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #2980b9;">{{ stats.recent_posts }}</p>
+    </div>
+
+  </div>
+  
+  <div style="margin-top: 30px;">
+    <a href="{% url 'admin:index' %}" style="text-decoration: none; color: #3b82f6; font-weight: bold;">&larr; Admin Bosh Sahifasiga Qaytish</a>
+  </div>
+</div>
+{% endblock %}

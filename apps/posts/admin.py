@@ -44,11 +44,16 @@ class PostReportAdmin(admin.ModelAdmin):
     list_display = ("post", "user", "reason", "is_resolved", "created_at")
     list_filter = ("is_resolved", "reason")
     search_fields = ("user__username", "post__id", "details")
-    actions = ["mark_resolved"]
+    readonly_fields = ("id", "post", "user", "reason", "details", "is_resolved", "created_at", "updated_at")
 
-    @admin.action(description="Shikoyatlarni hal etildi deb belgilash")
-    def mark_resolved(self, request, queryset):
-        queryset.update(is_resolved=True)
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(PostViewCounter)
