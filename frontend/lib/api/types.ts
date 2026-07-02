@@ -86,3 +86,16 @@ export interface PassportAnalytics {
     locked: boolean;
   }>;
 }
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  parent_id?: string | null;
+  user: UserProfile;
+  content: string;
+  likes_count: number;
+  is_liked_by_user?: boolean;
+  created_at: string;
+  replies?: Comment[];
+}
+
