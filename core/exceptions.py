@@ -23,6 +23,18 @@ class ApplicationError(Exception):
         self.status_code = status_code
 
 
+def sentry_before_send(event, hint):
+    """
+    ApplicationError (400 biznes xatoliklari) Sentry'ga yuborilmasligini
+    ta'minlovchi before_send hook. Faqat 500 va kutilmagan xatolar yuboriladi.
+    """
+    if "exc_info" in hint:
+        exc_type, exc_value, tb = hint["exc_info"]
+        if isinstance(exc_value, ApplicationError):
+            return None
+    return event
+
+
 def custom_exception_handler(exc, context):
     """DRF standart xatolarni ushlaydi va standart javob obyekti shakllantiradi."""
     # Agar bu bizning ApplicationError bo'lsa
@@ -72,6 +84,11 @@ def custom_exception_handler(exc, context):
     else:
         # 500 Internal Server Error (Kutilmagan tizim xatoligi)
         logger.exception("Kutilmagan xatolik yuz berdi", exc_info=exc)
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except Exception:
+            pass
         return Response(
             {
                 "success": False,

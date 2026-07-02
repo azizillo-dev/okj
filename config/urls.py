@@ -11,9 +11,43 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 from core.admin_dashboard import AdminDashboardView
 
 
+from django.db import connection
+from django.core.cache import cache
+
+
 def health_check(request):
-    """Konteynerlar salomatligini tekshirish uchun yengil endpoint (<1ms)."""
-    return JsonResponse({"status": "healthy", "platform": "OKJ Enterprise Modular Monolith"}, status=200)
+    """Konteynerlar salomatligini (Database va Redis ulanishini) tekshirish uchun endpoint."""
+    db_status = "ok"
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:
+        db_status = "unreachable"
+
+    redis_status = "ok"
+    try:
+        if hasattr(cache, "client") and hasattr(cache.client, "get_client"):
+            cache.client.get_client().ping()
+        else:
+            cache.set("health_check_ping", "pong", 5)
+            if cache.get("health_check_ping") != "pong":
+                redis_status = "unreachable"
+    except Exception:
+        redis_status = "unreachable"
+
+    is_healthy = (db_status == "ok" and redis_status == "ok")
+    status_code = 200 if is_healthy else 503
+    status_str = "healthy" if is_healthy else "unhealthy"
+
+    return JsonResponse(
+        {
+            "status": status_str,
+            "platform": "OKJ Enterprise Modular Monolith",
+            "database": db_status,
+            "redis": redis_status,
+        },
+        status=status_code,
+    )
 
 
 urlpatterns = [

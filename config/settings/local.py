@@ -53,3 +53,23 @@ CACHES = {
         "LOCATION": "okj-local-cache",
     }
 }
+
+# ==============================================================================
+# SENTRY ERROR TRACKING (Local - o'chirilgan, faqat SENTRY_DSN bo'lsa yoqiladi)
+# ==============================================================================
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.celery import CeleryIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration(), CeleryIntegration()],
+            traces_sample_rate=1.0,
+            send_default_pii=False,
+            before_send=sentry_before_send,
+            environment="local",
+        )
+    except ImportError:
+        pass
