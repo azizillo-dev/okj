@@ -72,7 +72,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({ post, initialCom
     setLikesCount(nextLiked ? prevCount + 1 : Math.max(0, prevCount - 1));
 
     try {
-      const res = await postsApi.likePost(post.id);
+      const res = await postsApi.toggleLike(post.id);
       setIsLiked(res.liked);
       setLikesCount(res.likes_count);
     } catch {
@@ -93,7 +93,7 @@ export const PostDetailView: React.FC<PostDetailViewProps> = ({ post, initialCom
 
   const handleAddComment = async (content: string, parentId?: string) => {
     try {
-      const newComment = await postsApi.addComment(post.id, content, parentId);
+      const newComment = await postsApi.createComment(post.id, content, parentId);
       if (parentId) {
         setComments((prev) =>
           prev.map((c) => {

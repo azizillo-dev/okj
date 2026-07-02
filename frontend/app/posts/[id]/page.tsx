@@ -8,7 +8,7 @@ import { PostDetailView } from '@/components/features/post-detail/PostDetailView
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   try {
-    const post = await postsApi.getPostById(id);
+    const post = await postsApi.getPostBySlug(id);
     return {
       title: `${post.title || post.user.first_name + ' posti'} — OKJ Platformasi`,
       description: post.content.substring(0, 160),
@@ -33,8 +33,8 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   let comments: Comment[] = [];
 
   try {
-    post = await postsApi.getPostById(id);
-    comments = await postsApi.getPostComments(id);
+    post = await postsApi.getPostBySlug(id);
+    comments = await postsApi.getComments(id);
   } catch {
     return (
       <div className="max-w-4xl mx-auto p-12 text-center">

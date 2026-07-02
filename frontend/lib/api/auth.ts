@@ -64,7 +64,7 @@ export const authApi = {
   },
 
   logout: async (refreshToken?: string | null): Promise<void> => {
-    await apiClient.post('/auth/logout/', { refresh: refreshToken, device_id: 'web_browser' }).catch(() => {});
+    await apiClient.post('/auth/logout/', { refresh_token: refreshToken, device_id: 'web_browser' }).catch(() => {});
   },
 
   logoutAll: async (): Promise<void> => {

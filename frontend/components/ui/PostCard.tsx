@@ -60,7 +60,7 @@ export const PostCard: React.FC<PostCardProps> = React.memo(({ post, onLikeToggl
 
     setIsLiking(true);
     try {
-      const result = await postsApi.likePost(post.id);
+      const result = await postsApi.toggleLike(post.id);
       setIsLiked(result.liked);
       setLikesCount(result.likes_count);
     } catch {
