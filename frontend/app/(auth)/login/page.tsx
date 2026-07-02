@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, ArrowRight } from 'lucide-react';
-import { setAccessToken } from '@/lib/api/client';
+import { authApi } from '@/lib/api/auth';
+import { useAuthStore } from '@/lib/store/authStore';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { loginSuccess } = useAuthStore();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,13 +21,12 @@ export default function LoginPage() {
     setErrorMsg(null);
 
     try {
-      // Simulate login token setting for standalone preview or actual API call
-      setTimeout(() => {
-        setAccessToken('mock_jwt_access_token');
-        router.push('/feed');
-      }, 800);
-    } catch {
-      setErrorMsg('Kirishda xatolik yuz berdi. Login yoki parolni tekshiring.');
+      const res = await authApi.login({ username, password });
+      loginSuccess(res);
+      router.push('/feed');
+    } catch (err: unknown) {
+      const detail = (err as { message?: string })?.message || 'Kirishda xatolik yuz berdi. Login yoki parolni tekshiring.';
+      setErrorMsg(detail);
       setIsLoading(false);
     }
   };

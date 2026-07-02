@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Shield, Loader2, ArrowRight } from 'lucide-react';
-import { setAccessToken } from '@/lib/api/client';
+import { authApi } from '@/lib/api/auth';
+import { useAuthStore } from '@/lib/store/authStore';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { loginSuccess } = useAuthStore();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -16,15 +18,30 @@ export default function RegisterPage() {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMsg(null);
 
-    setTimeout(() => {
-      setAccessToken('mock_jwt_access_token');
-      router.push('/u/OKJ-10492');
-    }, 1000);
+    try {
+      await authApi.register({
+        username: formData.username,
+        email: formData.email,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        password: formData.password,
+      });
+      // Automatically log in or redirect after registration
+      const res = await authApi.login({ username: formData.username, password: formData.password });
+      loginSuccess(res);
+      router.push('/feed');
+    } catch (err: unknown) {
+      const detail = (err as { message?: string })?.message || "Ro'yxatdan o'tishda xatolik yuz berdi.";
+      setErrorMsg(detail);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,6 +54,12 @@ export default function RegisterPage() {
           <h1 className="font-display font-bold text-2xl text-okj-text-primary">Elektron Pasport Olish</h1>
           <p className="text-xs text-okj-text-secondary">OKJ jamiyatiga a&apos;zo bo&apos;ling va statistikangizni boshlang</p>
         </div>
+
+        {errorMsg && (
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs text-center">
+            {errorMsg}
+          </div>
+        )}
 
         <form onSubmit={handleRegister} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">

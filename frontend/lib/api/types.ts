@@ -30,6 +30,8 @@ export interface UserProfile {
   streak_days?: number;
 }
 
+export type User = UserProfile;
+
 export interface Author {
   id: string;
   name: string;
