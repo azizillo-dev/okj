@@ -64,7 +64,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ okjId: s
       const dateStr = d.toISOString().split('T')[0];
       // Generate realistic reading patterns
       const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-      const pages = Math.random() > 0.4 ? (isWeekend ? Math.floor(Math.random() * 85) + 20 : Math.floor(Math.random() * 45)) : 0;
+      const hashVal = ((i * 9301 + 49297) % 233280) / 233280;
+      const pages = hashVal > 0.4 ? (isWeekend ? Math.floor(hashVal * 85) + 20 : Math.floor(hashVal * 45)) : 0;
       if (pages > 0) {
         list.push({
           date: dateStr,

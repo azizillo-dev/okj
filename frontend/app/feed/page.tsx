@@ -1,81 +1,86 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { Sparkles, Compass, TrendingUp, Flame } from 'lucide-react';
+import { Compass, TrendingUp, Flame, RefreshCw, AlertCircle, Sparkles } from 'lucide-react';
 import { postsApi } from '@/lib/api/posts';
 import { Post, PostType } from '@/lib/api/types';
 import { PostCard, IntentTag, SkeletonCard } from '@/components/ui';
+import { GlassCard, GlassButton } from '@/components/ui/glass';
 
 const FILTER_TAGS: { label: string; value: string }[] = [
   { label: 'Barchasi', value: '' },
   { label: 'Iqtiboslar', value: 'QUOTE' },
   { label: 'Taqrizlar', value: 'REVIEW' },
-  { label: 'Ko\'rgazma', value: 'SHOWCASE' },
+  { label: "Ko'rgazma", value: 'SHOWCASE' },
   { label: 'Almashish', value: 'EXCHANGE' },
-  { label: 'Sovg\'a', value: 'GIFT' },
+  { label: "Sovg'a", value: 'GIFT' },
   { label: 'Sotuv', value: 'SELL' },
 ];
 
 export default function FeedPage() {
   const [activeFilter, setActiveFilter] = useState<string>('');
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const queryClient = useQueryClient();
 
-  // Fetch feed with React Query infinite pagination
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     status,
+    isError,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ['feed', activeFilter],
     queryFn: async ({ pageParam = 1 }) => {
-      // If API fails or in standalone demo mode without running backend, return mock feed fallback
       try {
         const res = await postsApi.getFeed({ page: pageParam, type: activeFilter || undefined });
         return res;
       } catch {
+        // Fallback realistic demo feed if backend server offline
         return {
           count: 3,
-          next: null,
+          next: pageParam < 3 ? 'has_more' : null,
           previous: null,
           results: [
             {
-              id: '1',
-              user: { id: 'u1', username: 'navoiy_fan', first_name: 'Alisher', last_name: 'Rustamov', okj_id: 'OKJ-10492', total_xp: 1250 },
+              id: `post-${pageParam}-1`,
+              user: { id: 'u1', username: 'navoiy_fan', first_name: 'Alisher', last_name: 'Rustamov', okj_id: 'OKJ-10492', total_xp: 1450 },
               post_type: 'QUOTE' as PostType,
               content: 'Odamiylik deb bilg\'il odamni, Onikim yo\'qtur xalq g\'amidan g\'ami.',
               book: { id: 'b1', title: 'Xamsai Mutahayyirin', slug: 'xamsai-mutahayyirin', authors: [{ id: 'a1', name: 'Alisher Navoiy' }] },
               quote_page: 45,
               media: [],
-              likes_count: 42,
-              comments_count: 7,
+              likes_count: 142 + (pageParam * 5),
+              comments_count: 18,
               created_at: new Date().toISOString(),
             },
             {
-              id: '2',
+              id: `post-${pageParam}-2`,
               user: { id: 'u2', username: 'bookworm_uz', first_name: 'Malika', last_name: 'Saidova', okj_id: 'OKJ-20511', total_xp: 800 },
               post_type: 'EXCHANGE' as PostType,
               title: 'O\'tkan kunlar (Klassik nashr) almashamiz',
               content: 'Juda toza o\'qilgan kitob. o\'rniga Stiven King yoki Rey Bredberi asarlaridan biriga almashish niyatim bor.',
               price: 35000,
               book: { id: 'b2', title: 'O\'tkan kunlar', slug: 'otkan-kunlar', authors: [{ id: 'a2', name: 'Abdulla Qodiriy' }] },
-              media: [],
-              likes_count: 19,
+              media: [{ id: 'm1', file_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80', media_type: 'IMAGE' }],
+              likes_count: 38 + (pageParam * 2),
               comments_count: 12,
               created_at: new Date().toISOString(),
             },
             {
-              id: '3',
+              id: `post-${pageParam}-3`,
               user: { id: 'u3', username: 'intellect_99', first_name: 'Sardor', last_name: 'Ismoilov', okj_id: 'OKJ-31005', total_xp: 2100 },
               post_type: 'REVIEW' as PostType,
               title: 'Yulduzli tunlar — Tarixiy haqiqat fojiasi',
               content: 'Bobur mirzoning hayot yo\'lini chuqur tahlil qilgan eng kuchli o\'zbek romanlaridan biri. Har bir kitobxon o\'qishi shart deb hisoblayman.',
               book: { id: 'b3', title: 'Yulduzli tunlar', slug: 'yulduzli-tunlar', authors: [{ id: 'a3', name: 'Pirimqul Qodirov' }] },
               media: [],
-              likes_count: 85,
+              likes_count: 85 + (pageParam * 10),
               comments_count: 24,
               created_at: new Date().toISOString(),
             },
@@ -91,43 +96,65 @@ export default function FeedPage() {
 
   const allPosts = data?.pages.flatMap((p) => p.results) || [];
 
-  // TanStack Window Virtualizer setup for DOM optimization
+  // Pull To Refresh handler
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['feed'] });
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 500);
+  }, [queryClient, refetch]);
+
+  // Virtualized rendering
   const virtualizer = useWindowVirtualizer({
     count: hasNextPage ? allPosts.length + 1 : allPosts.length,
-    estimateSize: () => 280, // Approximate height of PostCard
+    estimateSize: () => 320,
     overscan: 5,
-    scrollMargin: listRef.current?.offsetTop || 0,
+    scrollMargin: 0,
   });
 
-  // Automatically fetch next page when virtual scroll reaches the end
+  // Intersection Observer for robust bottom trigger
   useEffect(() => {
-    const [lastItem] = [...virtualizer.getVirtualItems()].reverse();
-    if (!lastItem) return;
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
 
-    if (
-      lastItem.index >= allPosts.length - 1 &&
-      hasNextPage &&
-      !isFetchingNextPage
-    ) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, fetchNextPage, allPosts.length, isFetchingNextPage, virtualizer.getVirtualItems()]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
-      {/* Main Feed Column (Spans 3 cols on desktop) */}
-      <div className="lg:col-span-3 space-y-6">
-        {/* Feed Header & Filter Tags */}
-        <div className="space-y-4 bg-okj-surface/40 p-4 rounded-2xl border border-okj-card-border/60">
+      {/* Main Feed Column */}
+      <div className="lg:col-span-3 space-y-6" role="feed" aria-label="Kitobxonlik lentasi">
+        {/* Header & Pull To Refresh */}
+        <GlassCard variant="subtle" className="p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Compass className="w-5 h-5 text-okj-gold" />
-              <h1 className="font-display font-bold text-lg text-okj-text-primary">Jonli Lenta</h1>
+              <h1 className="font-display font-black text-xl text-okj-text-primary">Jonli Lenta</h1>
             </div>
-            <span className="text-xs text-okj-text-muted">{allPosts.length} ta post ko&apos;rsatilmoqda</span>
+
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-okj-text-secondary hover:text-okj-text-primary text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
+              aria-label="Lentani yangilash"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-okj-gold' : ''}`} />
+              <span>{isRefreshing ? 'Yangilanmoqda...' : 'Yangilash'}</span>
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {/* Filter Tags */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" role="tablist" aria-label="Lentani filtrlash">
             {FILTER_TAGS.map((tag) => (
               <IntentTag
                 key={tag.value}
@@ -137,17 +164,48 @@ export default function FeedPage() {
               />
             ))}
           </div>
-        </div>
+        </GlassCard>
 
-        {/* Loading Skeleton state */}
-        {status === 'pending' ? (
-          <div className="space-y-4">
+        {/* Error State */}
+        {isError && (
+          <GlassCard variant="default" className="p-8 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-rose-400 mx-auto" />
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-lg text-okj-text-primary">Lentani yuklashda xatolik yuz berdi</h3>
+              <p className="text-xs text-okj-text-secondary max-w-sm mx-auto">
+                Tarmoqda aloqa uzildi yoki serverda muammo yuzaga keldi. Iltimos qaytadan urinib ko&apos;ring.
+              </p>
+            </div>
+            <GlassButton variant="primary" onClick={() => refetch()}>
+              Qaytadan Urinish
+            </GlassButton>
+          </GlassCard>
+        )}
+
+        {/* Skeleton Loading State */}
+        {status === 'pending' && (
+          <div className="space-y-4" aria-busy="true" aria-label="Postlar yuklanmoqda">
             <SkeletonCard variant="post" />
             <SkeletonCard variant="post" />
             <SkeletonCard variant="post" />
           </div>
-        ) : (
-          /* Virtualized Feed List */
+        )}
+
+        {/* Empty State */}
+        {status === 'success' && allPosts.length === 0 && (
+          <GlassCard variant="default" className="p-12 text-center space-y-4">
+            <Sparkles className="w-12 h-12 text-okj-gold mx-auto" />
+            <div className="space-y-1">
+              <h3 className="font-display font-bold text-lg text-okj-text-primary">Hozircha postlar mavjud emas</h3>
+              <p className="text-xs text-okj-text-secondary max-w-sm mx-auto">
+                Siz tanlagan filtr bo&apos;yicha hech kim post qoldirmagan. Birinchi bo&apos;lib fikringiz bilan bo\'lishing!
+              </p>
+            </div>
+          </GlassCard>
+        )}
+
+        {/* Virtualized Feed Rendering */}
+        {status === 'success' && allPosts.length > 0 && (
           <div ref={listRef} className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const isLoaderRow = virtualRow.index > allPosts.length - 1;
@@ -165,14 +223,18 @@ export default function FeedPage() {
                     width: '100%',
                     transform: `translateY(${virtualRow.start - (virtualizer.options.scrollMargin || 0)}px)`,
                   }}
-                  className="pb-4"
+                  className="pb-6"
                 >
                   {isLoaderRow ? (
-                    hasNextPage ? (
-                      <SkeletonCard variant="post" />
-                    ) : (
-                      <div className="p-4 text-center text-xs text-okj-text-muted">Lenta tugadi.</div>
-                    )
+                    <div ref={loadMoreRef} className="py-4">
+                      {hasNextPage ? (
+                        <SkeletonCard variant="post" />
+                      ) : (
+                        <div className="p-4 text-center text-xs text-okj-text-muted font-mono">
+                          ✓ Barcha postlar ko&apos;rib chiqildi
+                        </div>
+                      )}
+                    </div>
                   ) : post ? (
                     <PostCard post={post} />
                   ) : null}
@@ -183,10 +245,9 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* Desktop Right Sidebar (Phase 2 Requirement 6) */}
+      {/* Desktop Right Sidebar Widgets */}
       <aside className="hidden lg:block space-y-6">
-        {/* Streak & Challenge Widget */}
-        <div className="p-5 rounded-2xl bg-okj-card border border-okj-card-border space-y-4">
+        <GlassCard variant="prominent" className="p-5 space-y-4">
           <div className="flex items-center gap-2 text-okj-gold font-display font-bold text-sm">
             <Flame className="w-4 h-4 fill-okj-gold" />
             <span>Kundalik O&apos;qish Seriyasi</span>
@@ -200,29 +261,28 @@ export default function FeedPage() {
               🔥
             </div>
           </div>
-        </div>
+        </GlassCard>
 
-        {/* Trending Books Widget */}
-        <div className="p-5 rounded-2xl bg-okj-card border border-okj-card-border space-y-4">
+        <GlassCard variant="default" className="p-5 space-y-4">
           <div className="flex items-center gap-2 font-display font-bold text-sm text-okj-text-primary">
             <TrendingUp className="w-4 h-4 text-okj-gold" />
             <span>Haftaning Top Kitoblari</span>
           </div>
           <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-2 rounded-xl bg-okj-surface/60">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-okj-surface/60 hover:bg-okj-surface transition-colors cursor-pointer">
               <span className="font-bold text-okj-text-primary truncate">1. Yulduzli tunlar</span>
               <span className="text-okj-gold font-mono">4.9 ★</span>
             </div>
-            <div className="flex items-center justify-between p-2 rounded-xl bg-okj-surface/60">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-okj-surface/60 hover:bg-okj-surface transition-colors cursor-pointer">
               <span className="font-bold text-okj-text-primary truncate">2. O&apos;tkan kunlar</span>
               <span className="text-okj-gold font-mono">4.8 ★</span>
             </div>
-            <div className="flex items-center justify-between p-2 rounded-xl bg-okj-surface/60">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-okj-surface/60 hover:bg-okj-surface transition-colors cursor-pointer">
               <span className="font-bold text-okj-text-primary truncate">3. Alkimyogar</span>
               <span className="text-okj-gold font-mono">4.7 ★</span>
             </div>
           </div>
-        </div>
+        </GlassCard>
       </aside>
     </div>
   );

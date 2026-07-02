@@ -62,7 +62,8 @@ export default function ComponentsPreviewPage() {
     for (let i = 0; i < 365; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() - (365 - i));
-      const pages = Math.random() > 0.45 ? Math.floor(Math.random() * 70) : 0;
+      const hashVal = ((i * 12345 + 6789) % 100000) / 100000;
+      const pages = hashVal > 0.45 ? Math.floor(hashVal * 70) : 0;
       if (pages > 0) {
         list.push({ date: d.toISOString().split('T')[0], pagesRead: pages, xpEarned: Math.floor(pages * 0.8) });
       }
