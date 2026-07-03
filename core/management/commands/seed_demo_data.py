@@ -88,34 +88,44 @@ class Command(BaseCommand):
         )
 
         # 5. Lenta Postlari (Feed)
+        Post.objects.filter(slug="").delete()  # Toza holat uchun bo'sh slugli postni o'chiramiz
         if Post.objects.count() == 0:
-            Post.objects.create(
-                user=user,
-                book=book1,
-                post_type=Post.PostType.REVIEW,
-                title="O'tkan kunlar — har safar yangicha taassurot",
-                content="Otabek va Kumushbibi muhabbati orqali o'zbek xalqining tarixiy qiyofasi mukammal ochib berilgan. Barcha yoshdagi kitobxonlarga o'qishni tavsiya etaman!",
-                status=Post.Status.PUBLISHED,
-                moderation_status=Post.ModerationStatus.APPROVED,
-                published_at=timezone.now(),
+            Post.objects.get_or_create(
+                slug="otkan-kunlar-taqriz",
+                defaults={
+                    "user": user,
+                    "book": book1,
+                    "post_type": Post.PostType.REVIEW,
+                    "title": "O'tkan kunlar — har safar yangicha taassurot",
+                    "content": "Otabek va Kumushbibi muhabbati orqali o'zbek xalqining tarixiy qiyofasi mukammal ochib berilgan. Barcha yoshdagi kitobxonlarga o'qishni tavsiya etaman!",
+                    "status": Post.Status.PUBLISHED,
+                    "moderation_status": Post.ModerationStatus.APPROVED,
+                    "published_at": timezone.now(),
+                }
             )
-            Post.objects.create(
-                user=user,
-                book=book2,
-                post_type=Post.PostType.QUOTE,
-                content="«Odamiylik o'zgalar dardiga darmon bo'lishdan boshlanur...» — Alisher Navoiy satrlaridagi hikmat hstira qadrlidir.",
-                status=Post.Status.PUBLISHED,
-                moderation_status=Post.ModerationStatus.APPROVED,
-                published_at=timezone.now(),
+            Post.objects.get_or_create(
+                slug="navoiy-hikmatli-iqtibos",
+                defaults={
+                    "user": user,
+                    "book": book2,
+                    "post_type": Post.PostType.QUOTE,
+                    "content": "«Odamiylik o'zgalar dardiga darmon bo'lishdan boshlanur...» — Alisher Navoiy satrlaridagi hikmat hstira qadrlidir.",
+                    "status": Post.Status.PUBLISHED,
+                    "moderation_status": Post.ModerationStatus.APPROVED,
+                    "published_at": timezone.now(),
+                }
             )
-            Post.objects.create(
-                user=user,
-                post_type=Post.PostType.EXCHANGE,
-                title="«Mehrobdan chayon» kitobini almashtirmoqchiman",
-                content="Menda yangi holatdagi «Mehrobdan chayon» bor. Jahon adabiyoti klassikasidan biron kitobga almashaman. Toshkent shahar bo'ylab.",
-                status=Post.Status.PUBLISHED,
-                moderation_status=Post.ModerationStatus.APPROVED,
-                published_at=timezone.now(),
+            Post.objects.get_or_create(
+                slug="mehrobdan-chayon-almashish",
+                defaults={
+                    "user": user,
+                    "post_type": Post.PostType.EXCHANGE,
+                    "title": "«Mehrobdan chayon» kitobini almashtirmoqchiman",
+                    "content": "Menda yangi holatdagi «Mehrobdan chayon» bor. Jahon adabiyoti klassikasidan biron kitobga almashaman. Toshkent shahar bo'ylab.",
+                    "status": Post.Status.PUBLISHED,
+                    "moderation_status": Post.ModerationStatus.APPROVED,
+                    "published_at": timezone.now(),
+                }
             )
             self.stdout.write(self.style.SUCCESS("3 ta namunaviy post lentaga qo'shildi!"))
 
