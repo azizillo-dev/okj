@@ -33,6 +33,8 @@ def sentry_before_send(event, hint):
     return event
 
 
+from django.db import IntegrityError
+
 def custom_exception_handler(exc, context):
     """DRF standart xatolarni ushlaydi va standart javob obyekti shakllantiradi."""
     # Agar bu bizning ApplicationError bo'lsa
@@ -58,6 +60,20 @@ def custom_exception_handler(exc, context):
                     "code": "VALIDATION_ERROR",
                     "message": "Kiritilgan ma'lumotlarda xatolik mavjud.",
                     "details": exc.message_dict if hasattr(exc, "message_dict") else {"detail": exc.messages},
+                },
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Ma'lumotlar bazasi takrorlanish xatolari (IntegrityError)
+    if isinstance(exc, IntegrityError):
+        return Response(
+            {
+                "success": False,
+                "error": {
+                    "code": "INTEGRITY_ERROR",
+                    "message": "Ushbu ma'lumot (foydalanuvchi nomi, email yoki telefon raqam) tizimda allaqachon mavjud.",
+                    "details": None,
                 },
             },
             status=status.HTTP_400_BAD_REQUEST,

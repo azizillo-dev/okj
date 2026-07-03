@@ -84,6 +84,9 @@ class UserService(BaseService):
         if username and User.objects.filter(username__iexact=username).exists():
             raise ApplicationError("Ushbu foydalanuvchi nomi allaqachon band qilingan.")
 
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise ApplicationError("Ushbu email manzil allaqachon ro'yxatdan o'tgan.")
+
         district = None
         if district_id:
             district = District.objects.filter(id=district_id).first()
