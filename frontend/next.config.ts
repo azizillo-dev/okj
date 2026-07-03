@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  skipTrailingSlashRedirect: true,
   compress: true,
   images: {
     formats: ['image/avif', 'image/webp'],

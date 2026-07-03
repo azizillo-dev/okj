@@ -66,22 +66,23 @@ class UserService(BaseService):
     @transaction.atomic
     def register_reader(
         cls,
-        phone_number: str,
+        phone_number: Optional[str] = None,
         first_name: str = "",
         last_name: str = "",
         district_id: Optional[int] = None,
         google_id: Optional[str] = None,
+        username: Optional[str] = None,
+        email: Optional[str] = None,
+        password: Optional[str] = None,
     ) -> User:
         """
         Yangi kitobxonni ro'yxatdan o'tkazish va avtomatik OKJ pasport raqamini berish.
-
-        Nega @transaction.atomic + select_for_update():
-        - Foydalanuvchi yaratilsa-yu ID berishda xato bo'lsa, bazada yarimta yozuv qolmaydi.
-        - Ikki foydalanuvchi bir millisekundda ro'yxatdan o'tsa ham, PostgreSQL row-level lock
-          orqali ularga UNIKAL, TAKRORLANMAS va NUMERIK tartibdagi okj_id kafolatlanadi.
         """
-        if phone_number and UserSelector.get_user_by_phone(phone_number):
+        if phone_number and phone_number.startswith("+998") and UserSelector.get_user_by_phone(phone_number):
             raise ApplicationError("Ushbu telefon raqami bilan kitobxon allaqachon ro'yxatdan o'tgan.")
+
+        if username and User.objects.filter(username__iexact=username).exists():
+            raise ApplicationError("Ushbu foydalanuvchi nomi allaqachon band qilingan.")
 
         district = None
         if district_id:
@@ -89,14 +90,15 @@ class UserService(BaseService):
             if not district:
                 raise ApplicationError("Ko'rsatilgan tuman topilmadi.")
 
-        # Atomik va takrorlanmas OKJ raqami (Row-level lock orqali)
         okj_number, okj_id = cls._generate_atomic_okj_id()
 
-        username = phone_number or f"google_{google_id}_{okj_number}"
+        final_username = username or phone_number or email or f"user_{okj_number}"
+        final_phone = phone_number if (phone_number and phone_number.startswith("+998")) else None
 
         user = User.objects.create(
-            username=username,
-            phone_number=phone_number,
+            username=final_username,
+            email=email or "",
+            phone_number=final_phone,
             google_id=google_id,
             first_name=first_name,
             last_name=last_name,
@@ -105,7 +107,10 @@ class UserService(BaseService):
             okj_number=okj_number,
             role=User.Role.READER,
         )
-        user.set_unusable_password()
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save()
         return user
 

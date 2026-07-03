@@ -45,11 +45,19 @@ class ReaderProfileReadSerializer(serializers.ModelSerializer):
 
 class ReaderRegisterSerializer(serializers.Serializer):
     """Ro'yxatdan o'tkazish uchun kiruvchi JSON payload."""
-    phone_number = serializers.CharField(max_length=20, validators=[validate_phone_number_format])
+    phone_number = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
+    username = serializers.CharField(max_length=150, required=False, allow_blank=True, allow_null=True)
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+    password = serializers.CharField(max_length=128, required=False, allow_blank=True, allow_null=True)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     district_id = serializers.IntegerField(required=False, allow_null=True)
     google_id = serializers.CharField(max_length=255, required=False, allow_blank=True, allow_null=True)
+
+    def validate_phone_number(self, value):
+        if value and value.startswith("+998"):
+            validate_phone_number_format(value)
+        return value
 
 
 class ReaderProfileUpdateSerializer(serializers.Serializer):

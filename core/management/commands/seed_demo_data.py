@@ -79,12 +79,12 @@ class Command(BaseCommand):
         LibraryItem.objects.get_or_create(
             user=user,
             book=book1,
-            defaults={"status": LibraryItem.ReadingStatus.FINISHED, "progress_pages": 384}
+            defaults={"status": LibraryItem.ReadingStatus.FINISHED, "current_page": 384}
         )
         LibraryItem.objects.get_or_create(
             user=user,
             book=book2,
-            defaults={"status": LibraryItem.ReadingStatus.FINISHED, "progress_pages": 256}
+            defaults={"status": LibraryItem.ReadingStatus.FINISHED, "current_page": 256}
         )
 
         # 5. Lenta Postlari (Feed)
