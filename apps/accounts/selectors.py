@@ -6,7 +6,8 @@ xato ORM filterlar yozilishidan saqlaydi.
 """
 
 from typing import Optional
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
+from core.exceptions import ApplicationError
 from shared.selectors import BaseSelector
 from .models import User, District
 
@@ -26,8 +27,12 @@ class UserSelector(BaseSelector):
 
     @classmethod
     def get_user_by_phone(cls, phone_number: str) -> Optional[User]:
-        """Telefon raqami bo'yicha qidirish."""
-        return User.objects.select_related("district").filter(phone_number=phone_number).first()
+        """Telefon raqami, username yoki email bo'yicha qidirish."""
+        if not phone_number:
+            return None
+        return User.objects.select_related("district").filter(
+            Q(phone_number=phone_number) | Q(username__iexact=phone_number) | Q(email__iexact=phone_number)
+        ).first()
 
     @classmethod
     def get_district_leaderboard(cls, district_id: int, limit: int = 50) -> QuerySet[User]:

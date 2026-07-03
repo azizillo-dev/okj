@@ -23,7 +23,8 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 
 class LoginPasswordSerializer(serializers.Serializer):
-    phone_number = serializers.CharField(max_length=20, validators=[validate_auth_phone_number])
+    phone_number = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    username = serializers.CharField(max_length=150, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True)
     device_id = serializers.CharField(max_length=255, default="web_browser")
     device_type = serializers.ChoiceField(choices=UserDevice.DeviceType.choices, default=UserDevice.DeviceType.WEB)

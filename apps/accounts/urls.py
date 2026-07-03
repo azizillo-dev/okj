@@ -13,7 +13,10 @@ from .apis import (
 
 urlpatterns = [
     path("districts/", DistrictListApi.as_view(), name="district-list"),
+    path("districts", DistrictListApi.as_view()),
     path("register/", ReaderRegisterApi.as_view(), name="reader-register"),
+    path("register", ReaderRegisterApi.as_view()),
     path("me/", ReaderProfileApi.as_view(), name="reader-profile"),
+    path("me", ReaderProfileApi.as_view()),
     path("leaderboard/district/<int:district_id>/", DistrictLeaderboardApi.as_view(), name="district-leaderboard"),
 ]

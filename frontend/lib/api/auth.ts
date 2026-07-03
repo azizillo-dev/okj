@@ -27,6 +27,7 @@ export const authApi = {
   login: async (payload: LoginPayload): Promise<AuthTokensResponse> => {
     const requestPayload = {
       phone_number: payload.phone_number || payload.username,
+      username: payload.username || payload.phone_number,
       password: payload.password,
       device_id: 'web_browser',
       device_type: 'WEB',
@@ -37,9 +38,12 @@ export const authApi = {
 
   register: async (payload: RegisterPayload): Promise<{ message: string; user_id?: string }> => {
     const requestPayload = {
-      phone_number: payload.phone_number || payload.username,
+      phone_number: payload.phone_number,
+      username: payload.username || payload.phone_number,
+      email: payload.email,
       first_name: payload.first_name,
       last_name: payload.last_name,
+      password: payload.password,
     };
     const response = await apiClient.post<APIResponse<{ message: string; user_id?: string }>>('/accounts/register/', requestPayload);
     return response.data.data || { message: 'Tasdiqlash kodi yuborildi' };
